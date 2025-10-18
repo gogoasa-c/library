@@ -39,22 +39,22 @@ class BookRepositoryTest {
         @Test
         @DisplayName("Should create new book with generated ID")
         void addBook_ShouldCreateNewBookWithGeneratedId() {
-            Book book = new Book(null, "Test Book", testAuthor, testCollection, 2024);
+            Book book = new Book(null, "Test Book", testAuthor.id(), testCollection.id(), 2024);
 
             Book savedBook = repository.addBook(book);
 
             assertNotNull(savedBook.id());
             assertEquals(book.title(), savedBook.title());
-            assertEquals(book.author(), savedBook.author());
-            assertEquals(book.collection(), savedBook.collection());
+            assertEquals(book.authorId(), savedBook.authorId());
+            assertEquals(book.collectionId(), savedBook.collectionId());
             assertEquals(book.publicationYear(), savedBook.publicationYear());
         }
 
         @Test
         @DisplayName("Should generate unique IDs for multiple books")
         void addMultipleBooks_ShouldGenerateUniqueIds() {
-            Book book1 = new Book(null, "Book 1", testAuthor, testCollection, 2024);
-            Book book2 = new Book(null, "Book 2", testAuthor, testCollection, 2024);
+            Book book1 = new Book(null, "Book 1", testAuthor.id(), testCollection.id(), 2024);
+            Book book2 = new Book(null, "Book 2", testAuthor.id(), testCollection.id(), 2024);
 
             Book savedBook1 = repository.addBook(book1);
             Book savedBook2 = repository.addBook(book2);
@@ -70,15 +70,15 @@ class BookRepositoryTest {
         @DisplayName("Should return book when exists")
         void findById_WhenBookExists_ShouldReturnBook() {
             Book book = repository.addBook(
-                new Book(null, "Test Book", testAuthor, testCollection, 2024)
+                new Book(null, "Test Book", testAuthor.id(), testCollection.id(), 2024)
             );
 
             Optional<Book> found = repository.findById(book.id());
 
             assertTrue(found.isPresent());
             assertEquals(book.title(), found.get().title());
-            assertEquals(book.author(), found.get().author());
-            assertEquals(book.collection(), found.get().collection());
+            assertEquals(book.authorId(), found.get().authorId());
+            assertEquals(book.collectionId(), found.get().collectionId());
         }
 
         @Test
@@ -97,10 +97,10 @@ class BookRepositoryTest {
         @DisplayName("Should return all books when books exist")
         void findAll_WhenBooksExist_ShouldReturnAllBooks() {
             Book book1 = repository.addBook(
-                new Book(null, "Book 1", testAuthor, testCollection, 2024)
+                new Book(null, "Book 1", testAuthor.id(), testCollection.id(), 2024)
             );
             Book book2 = repository.addBook(
-                new Book(null, "Book 2", testAuthor, testCollection, 2024)
+                new Book(null, "Book 2", testAuthor.id(), testCollection.id(), 2024)
             );
 
             List<Book> books = repository.findAll();
@@ -126,7 +126,7 @@ class BookRepositoryTest {
         @DisplayName("Should persist data between repository instances")
         void persistenceTest_ShouldPersistBetweenRepositoryInstances() {
             Book book = repository.addBook(
-                new Book(null, "Persistent Book", testAuthor, testCollection, 2024)
+                new Book(null, "Persistent Book", testAuthor.id(), testCollection.id(), 2024)
             );
 
             BookRepository newRepository = new BookRepository();
@@ -142,17 +142,15 @@ class BookRepositoryTest {
             Author author = new Author(42L, "Special Author");
             Collection collection = new Collection(24L, "Special Collection");
             Book book = repository.addBook(
-                new Book(null, "Complex Book", author, collection, 2024)
+                new Book(null, "Complex Book", author.id(), collection.id(), 2024)
             );
 
             BookRepository newRepository = new BookRepository();
             Optional<Book> found = newRepository.findById(book.id());
 
             assertTrue(found.isPresent());
-            assertEquals(author.id(), found.get().author().id());
-            assertEquals(author.name(), found.get().author().name());
-            assertEquals(collection.id(), found.get().collection().id());
-            assertEquals(collection.name(), found.get().collection().name());
+            assertEquals(author.id(), found.get().authorId());
+            assertEquals(collection.id(), found.get().collectionId());
         }
     }
 }

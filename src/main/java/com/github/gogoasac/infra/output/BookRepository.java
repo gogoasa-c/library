@@ -35,8 +35,8 @@ public class BookRepository extends AbstractFileRepository<Book> implements Book
         return new Book(
             id,
             book.title(),
-            book.author(),
-            book.collection(),
+            book.authorId(),
+            book.collectionId(),
             book.publicationYear()
         );
     }

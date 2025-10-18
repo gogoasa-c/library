@@ -20,7 +20,22 @@ public class BookManagementService implements BookManagementInput {
 
     @Override
     public Book addBook(AddBookCommand addBookCommand) {
+        if (authorPersistence.findById(addBookCommand.authorId()).isEmpty()) {
+            throw new IllegalArgumentException("Author with ID " + addBookCommand.authorId() + " does not exist.");
+        }
 
-        return null;
+        if (collectionPersistence.findById(addBookCommand.collectionId()).isEmpty()) {
+            throw new IllegalArgumentException("Collection with ID " + addBookCommand.collectionId() + " does not exist.");
+        }
+
+        Book book = new Book(
+            null,
+            addBookCommand.title(),
+            addBookCommand.authorId(),
+            addBookCommand.collectionId(),
+            addBookCommand.publicationYear()
+        );
+
+        return bookPersistence.addBook(book);
     }
 }

@@ -25,6 +25,7 @@ public class DependencyOrchestrator {
         this.bookPersistence = new BookRepository();
         this.authorPersistence = new AuthorRepository();
         this.collectionPersistence = new CollectionRepository();
+
         this.reportingInput = new ReportingService(collectionPersistence, bookPersistence, authorPersistence);
 
         this.bookManagementService = new BookManagementService(

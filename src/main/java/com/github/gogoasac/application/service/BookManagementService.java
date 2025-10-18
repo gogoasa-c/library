@@ -7,6 +7,8 @@ import com.github.gogoasac.application.output.BookPersistence;
 import com.github.gogoasac.application.output.CollectionPersistence;
 import com.github.gogoasac.domain.entity.Book;
 
+import java.util.List;
+
 public class BookManagementService implements BookManagementInput {
     private final BookPersistence bookPersistence;
     private final AuthorPersistence authorPersistence;
@@ -38,4 +40,16 @@ public class BookManagementService implements BookManagementInput {
 
         return bookPersistence.addBook(book);
     }
+
+    @Override
+    public List<Book> getAll() {
+        return bookPersistence.findAll();
+    }
+
+    @Override
+    public Book getById(Long id) {
+        return bookPersistence.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Book with ID " + id + " does not exist."));
+    }
+
 }

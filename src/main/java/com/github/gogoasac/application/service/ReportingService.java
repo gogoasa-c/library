@@ -1,16 +1,15 @@
 package com.github.gogoasac.application.service;
 
-import com.github.gogoasac.application.input.ReportingInput;
-import com.github.gogoasac.application.dto.CollectionReport;
 import com.github.gogoasac.application.dto.BookReport;
-import com.github.gogoasac.application.output.CollectionPersistence;
-import com.github.gogoasac.application.output.BookPersistence;
+import com.github.gogoasac.application.dto.CollectionReport;
+import com.github.gogoasac.application.input.ReportingInput;
 import com.github.gogoasac.application.output.AuthorPersistence;
-import com.github.gogoasac.domain.entity.Collection;
-import com.github.gogoasac.domain.entity.Book;
+import com.github.gogoasac.application.output.BookPersistence;
+import com.github.gogoasac.application.output.CollectionPersistence;
 import com.github.gogoasac.domain.entity.Author;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.github.gogoasac.domain.entity.Book;
+import com.github.gogoasac.domain.entity.Collection;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -18,6 +17,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ReportingService implements ReportingInput {
     private final CollectionPersistence collectionPersistence;
@@ -35,26 +37,28 @@ public class ReportingService implements ReportingInput {
     @Override
     public List<CollectionReport> generateCollectionReports() {
         List<Collection> collections = collectionPersistence.findAll();
-        List<Book> books = bookPersistence.findAll();
+        Map<Long, List<Book>> booksByCollection = bookPersistence.findAll()
+            .stream()
+            .collect(Collectors.groupingBy(Book::collectionId));
 
         List<CollectionReport> reports = collections.stream()
-            .map(collection -> {
-                List<BookReport> bookReports = books.stream()
-                    .filter(book -> book.collectionId().equals(collection.id()))
-                    .map(book -> {
-                        Author author = authorPersistence.findById(book.authorId())
-                            .orElseThrow(() -> new IllegalArgumentException(
-                                "Author with ID " + book.authorId() + " does not exist."));
-                        return new BookReport(book.title(), author.name());
-                    })
-                    .collect(Collectors.toList());
-                return new CollectionReport(collection.name(), bookReports);
-            })
+            .map(collection -> new CollectionReport(
+                collection.name(),
+                booksByCollection.getOrDefault(collection.id(), List.of()).stream()
+                    .map(this::mapToBookReport)
+                    .collect(Collectors.toList())
+            ))
             .collect(Collectors.toList());
 
-        // write to text file
         writeReportFile(reports);
         return reports;
+    }
+
+    private BookReport mapToBookReport(Book book) {
+        Author author = authorPersistence.findById(book.authorId())
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Author with ID " + book.authorId() + " does not exist."));
+        return new BookReport(book.title(), author.name());
     }
 
     private void writeReportFile(List<CollectionReport> reports) {

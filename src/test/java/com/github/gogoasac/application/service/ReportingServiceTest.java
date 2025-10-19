@@ -54,7 +54,7 @@ class ReportingServiceTest {
             );
             colPersist = new CollectionPersistence() {
                 @Override
-                public Collection save(Collection collection) {
+                public Collection addCollection(Collection collection) {
                     throw new UnsupportedOperationException();
                 }
 

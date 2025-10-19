@@ -29,7 +29,8 @@ class BookRepositoryTest {
     void tearDown() {
         File file = new File(FILE_PATH);
         if (file.exists()) {
-            file.delete();
+            boolean deleted = file.delete();
+            assertTrue(deleted, "Failed to delete test file " + FILE_PATH);
         }
     }
 
@@ -96,10 +97,10 @@ class BookRepositoryTest {
         @Test
         @DisplayName("Should return all books when books exist")
         void findAll_WhenBooksExist_ShouldReturnAllBooks() {
-            Book book1 = repository.addBook(
+            repository.addBook(
                 new Book(null, "Book 1", testAuthor.id(), testCollection.id(), 2024)
             );
-            Book book2 = repository.addBook(
+            repository.addBook(
                 new Book(null, "Book 2", testAuthor.id(), testCollection.id(), 2024)
             );
 
@@ -137,20 +138,25 @@ class BookRepositoryTest {
         }
 
         @Test
-        @DisplayName("Should preserve complete object graph")
-        void persistenceTest_ShouldPreserveCompleteObjectGraph() {
-            Author author = new Author(42L, "Special Author");
-            Collection collection = new Collection(24L, "Special Collection");
+        @DisplayName("Should preserve book field values across repository instances")
+        void persistenceTest_ShouldPreserveBookFields() {
+            // create book with specific field values
+            Long authorId = 42L;
+            Long collectionId = 24L;
             Book book = repository.addBook(
-                new Book(null, "Complex Book", author.id(), collection.id(), 2024)
+                new Book(null, "Complex Book", authorId, collectionId, 2024)
             );
 
             BookRepository newRepository = new BookRepository();
             Optional<Book> found = newRepository.findById(book.id());
 
             assertTrue(found.isPresent());
-            assertEquals(author.id(), found.get().authorId());
-            assertEquals(collection.id(), found.get().collectionId());
+            // verify all fields are persisted
+            Book retrieved = found.get();
+            assertEquals(book.title(), retrieved.title());
+            assertEquals(book.authorId(), retrieved.authorId());
+            assertEquals(book.collectionId(), retrieved.collectionId());
+            assertEquals(book.publicationYear(), retrieved.publicationYear());
         }
     }
 }

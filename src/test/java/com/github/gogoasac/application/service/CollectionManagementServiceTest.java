@@ -26,7 +26,7 @@ class CollectionManagementServiceTest {
                 private Long nextId = 1L;
 
                 @Override
-                public Collection save(Collection collection) {
+                public Collection addCollection(Collection collection) {
                     return new Collection(nextId++, collection.name());
                 }
 
@@ -78,7 +78,7 @@ class CollectionManagementServiceTest {
 
             collectionPersistence = new CollectionPersistence() {
                 @Override
-                public Collection save(Collection collection) {
+                public Collection addCollection(Collection collection) {
                     return null;
                 }
 
@@ -111,7 +111,7 @@ class CollectionManagementServiceTest {
         void shouldReturnEmptyList() {
             collectionPersistence = new CollectionPersistence() {
                 @Override
-                public Collection save(Collection collection) {
+                public Collection addCollection(Collection collection) {
                     return null;
                 }
 
@@ -142,7 +142,7 @@ class CollectionManagementServiceTest {
 
             collectionPersistence = new CollectionPersistence() {
                 @Override
-                public Collection save(Collection collection) {
+                public Collection addCollection(Collection collection) {
                     return null;
                 }
 

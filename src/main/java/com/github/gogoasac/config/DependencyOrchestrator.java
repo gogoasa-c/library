@@ -11,7 +11,7 @@ import com.github.gogoasac.infra.output.BookRepository;
 import com.github.gogoasac.infra.output.CollectionRepository;
 
 public class DependencyOrchestrator {
-    public static DependencyOrchestrator INSTANCE = new DependencyOrchestrator();
+    public static final DependencyOrchestrator INSTANCE = new DependencyOrchestrator();
 
     private final BookPersistence bookPersistence;
     private final AuthorPersistence authorPersistence;

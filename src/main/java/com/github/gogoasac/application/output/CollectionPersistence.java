@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CollectionPersistence {
-    Collection save(Collection collection);
+    Collection addCollection(Collection collection);
 
     Optional<Collection> findById(Long id);
 

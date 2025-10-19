@@ -17,7 +17,7 @@ public class CollectionManagementService implements CollectionManagementInput {
     @Override
     public Collection addCollection(AddCollectionCommand addCollectionCommand) {
         Collection collection = new Collection(null, addCollectionCommand.name());
-        return collectionPersistence.save(collection);
+        return collectionPersistence.addCollection(collection);
     }
 
     @Override

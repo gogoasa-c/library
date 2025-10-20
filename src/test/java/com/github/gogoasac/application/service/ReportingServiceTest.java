@@ -14,7 +14,10 @@ import org.junit.jupiter.api.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +34,8 @@ class ReportingServiceTest {
     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     Path reportPath;
     ReportingInput service;
+    Clock fixedClock;
+    String fixedDate;
 
     @Nested
     @DisplayName("generateCollectionReports")
@@ -44,8 +49,10 @@ class ReportingServiceTest {
 
         @BeforeEach
         void setup() throws IOException {
-            String date = LocalDate.now().format(fmt);
-            reportPath = Path.of("report_" + date + ".txt");
+            // Use a fixed clock for deterministic testing
+            fixedClock = Clock.fixed(Instant.parse("2025-10-20T12:00:00Z"), ZoneId.systemDefault());
+            fixedDate = LocalDate.now(fixedClock).format(fmt);
+            reportPath = Path.of("report_" + fixedDate + ".txt");
             Files.deleteIfExists(reportPath);
 
             colList = List.of(
@@ -114,7 +121,7 @@ class ReportingServiceTest {
                 }
             };
 
-            service = new ReportingService(colPersist, bookPersist, authPersist);
+            service = new ReportingService(colPersist, bookPersist, authPersist, fixedClock);
         }
 
         @Test
@@ -140,7 +147,7 @@ class ReportingServiceTest {
             assertTrue(Files.exists(reportPath), "Report file should be created");
 
             List<String> lines = Files.readAllLines(reportPath);
-            assertTrue(lines.get(0).contains("Library Report - " + LocalDate.now().format(fmt)));
+            assertTrue(lines.get(0).contains("Library Report - " + fixedDate));
             assertTrue(lines.contains("Collection: Sci-Fi"));
             assertTrue(lines.contains("Collection: Fantasy"));
             assertTrue(lines.stream().anyMatch(l -> l.trim().startsWith("Title") && l.contains("| Author")));

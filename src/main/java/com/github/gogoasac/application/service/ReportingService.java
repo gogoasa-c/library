@@ -15,6 +15,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -25,13 +26,22 @@ public class ReportingService implements ReportingInput {
     private final CollectionPersistence collectionPersistence;
     private final BookPersistence bookPersistence;
     private final AuthorPersistence authorPersistence;
+    private final Clock clock;
 
     public ReportingService(CollectionPersistence collectionPersistence,
                             BookPersistence bookPersistence,
                             AuthorPersistence authorPersistence) {
+        this(collectionPersistence, bookPersistence, authorPersistence, Clock.systemDefaultZone());
+    }
+
+    public ReportingService(CollectionPersistence collectionPersistence,
+                            BookPersistence bookPersistence,
+                            AuthorPersistence authorPersistence,
+                            Clock clock) {
         this.collectionPersistence = collectionPersistence;
         this.bookPersistence = bookPersistence;
         this.authorPersistence = authorPersistence;
+        this.clock = clock;
     }
 
     @Override
@@ -40,12 +50,17 @@ public class ReportingService implements ReportingInput {
         Map<Long, List<Book>> booksByCollection = bookPersistence.findAll()
             .stream()
             .collect(Collectors.groupingBy(Book::collectionId));
+        
+        // Preload authors to avoid N+1 query pattern
+        Map<Long, Author> authorsById = authorPersistence.findAll()
+            .stream()
+            .collect(Collectors.toMap(Author::id, author -> author));
 
         List<CollectionReport> reports = collections.stream()
             .map(collection -> new CollectionReport(
                 collection.name(),
                 booksByCollection.getOrDefault(collection.id(), List.of()).stream()
-                    .map(this::mapToBookReport)
+                    .map(book -> mapToBookReport(book, authorsById))
                     .collect(Collectors.toList())
             ))
             .collect(Collectors.toList());
@@ -54,16 +69,18 @@ public class ReportingService implements ReportingInput {
         return reports;
     }
 
-    private BookReport mapToBookReport(Book book) {
-        Author author = authorPersistence.findById(book.authorId())
-            .orElseThrow(() -> new IllegalArgumentException(
-                "Author with ID " + book.authorId() + " does not exist."));
+    private BookReport mapToBookReport(Book book, Map<Long, Author> authorsById) {
+        Author author = authorsById.get(book.authorId());
+        if (author == null) {
+            throw new IllegalArgumentException(
+                "Author with ID " + book.authorId() + " does not exist.");
+        }
         return new BookReport(book.title(), author.name());
     }
 
     private void writeReportFile(List<CollectionReport> reports) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String date = LocalDate.now().format(formatter);
+        String date = LocalDate.now(clock).format(formatter);
         String fileName = "report_" + date + ".txt";
         Path path = Paths.get(fileName);
         StringBuilder sb = new StringBuilder();

@@ -12,7 +12,7 @@ public class BookRepository extends AbstractFileRepository<Book> implements Book
     private static final String FILE_PATH = "Books.json";
 
     public BookRepository() {
-        super(FILE_PATH, new TypeReference<List<Book>>() {}, Book::id);
+        super(FILE_PATH, new TypeReference<>() {}, Book::id);
     }
 
     @Override

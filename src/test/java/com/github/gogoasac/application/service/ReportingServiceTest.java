@@ -119,7 +119,7 @@ class ReportingServiceTest {
 
         @Test
         @DisplayName("should return correct collection reports from data")
-        void shouldReturnReports() {
+        void shouldReturnReports() throws IOException {
             List<CollectionReport> reports = service.generateCollectionReports();
             assertEquals(2, reports.size(), "Should have two collection reports");
 
@@ -140,7 +140,7 @@ class ReportingServiceTest {
             assertTrue(Files.exists(reportPath), "Report file should be created");
 
             List<String> lines = Files.readAllLines(reportPath);
-            assertTrue(lines.get(0).contains("Library Report - " + LocalDate.now().format(fmt)));
+            assertTrue(lines.getFirst().contains("Library Report - " + LocalDate.now().format(fmt)));
             assertTrue(lines.contains("Collection: Sci-Fi"));
             assertTrue(lines.contains("Collection: Fantasy"));
             assertTrue(lines.stream().anyMatch(l -> l.trim().startsWith("Title") && l.contains("| Author")));

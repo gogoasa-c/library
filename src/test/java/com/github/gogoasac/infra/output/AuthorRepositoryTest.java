@@ -11,12 +11,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("AuthorRepository Tests")
 class AuthorRepositoryTest {
-    private static final String FILE_PATH = "Authors.json";
+    private static final String FILE_PATH = "Authors_test.json";
     private AuthorRepository repository;
 
     @BeforeEach
     void setUp() {
-        repository = new AuthorRepository();
+        repository = new AuthorRepository(FILE_PATH);
     }
 
     @AfterEach
@@ -98,8 +98,8 @@ class AuthorRepositoryTest {
         @Test
         @DisplayName("Should return all authors when authors exist")
         void findAll_WhenAuthorsExist_ShouldReturnAllAuthors() {
-            Author author1 = repository.addAuthor(new Author(null, "Author 1"));
-            Author author2 = repository.addAuthor(new Author(null, "Author 2"));
+            repository.addAuthor(new Author(null, "Author 1"));
+            repository.addAuthor(new Author(null, "Author 2"));
 
             List<Author> authors = repository.findAll();
 
@@ -125,7 +125,7 @@ class AuthorRepositoryTest {
         void persistenceTest_ShouldPersistBetweenRepositoryInstances() {
             Author author = repository.addAuthor(new Author(null, "Persistent Author"));
 
-            AuthorRepository newRepository = new AuthorRepository();
+            AuthorRepository newRepository = new AuthorRepository(FILE_PATH);
             Optional<Author> found = newRepository.findById(author.id());
 
             assertTrue(found.isPresent());

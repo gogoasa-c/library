@@ -44,7 +44,7 @@ class ReportingServiceTest {
 
         @BeforeEach
         void setup() throws IOException {
-            String date = LocalDate.now().format(fmt);
+            final String date = LocalDate.now().format(fmt);
             reportPath = Path.of("report_" + date + ".txt");
             Files.deleteIfExists(reportPath);
 
@@ -53,20 +53,9 @@ class ReportingServiceTest {
                 new Collection(2L, "Fantasy")
             );
             colPersist = new CollectionPersistence() {
-                @Override
-                public Collection addCollection(Collection collection) {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public Optional<Collection> findById(Long id) {
-                    return colList.stream().filter(c -> c.id().equals(id)).findFirst();
-                }
-
-                @Override
-                public List<Collection> findAll() {
-                    return colList;
-                }
+                @Override public Collection addCollection(Collection collection) { throw new UnsupportedOperationException(); }
+                @Override public Optional<Collection> findById(Long id) { return colList.stream().filter(c -> c.id().equals(id)).findFirst(); }
+                @Override public List<Collection> findAll() { return colList; }
             };
 
             // stub books
@@ -76,20 +65,9 @@ class ReportingServiceTest {
                 new Book(3L, "LOTR", 3L, 2L, 1954)
             );
             bookPersist = new BookPersistence() {
-                @Override
-                public Book addBook(Book book) {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public Optional<Book> findById(Long id) {
-                    return bookList.stream().filter(b -> b.id().equals(id)).findFirst();
-                }
-
-                @Override
-                public List<Book> findAll() {
-                    return bookList;
-                }
+                @Override public Book addBook(Book book) { throw new UnsupportedOperationException(); }
+                @Override public Optional<Book> findById(Long id) { return bookList.stream().filter(b -> b.id().equals(id)).findFirst(); }
+                @Override public List<Book> findAll() { return bookList; }
             };
 
             authors = Map.of(
@@ -97,21 +75,11 @@ class ReportingServiceTest {
                 2L, new Author(2L, "William Gibson"),
                 3L, new Author(3L, "J.R.R. Tolkien")
             );
+
             authPersist = new AuthorPersistence() {
-                @Override
-                public Author addAuthor(Author author) {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public Optional<Author> findById(Long id) {
-                    return Optional.ofNullable(authors.get(id));
-                }
-
-                @Override
-                public List<Author> findAll() {
-                    return new ArrayList<>(authors.values());
-                }
+                @Override public Author addAuthor(Author author) { throw new UnsupportedOperationException(); }
+                @Override public Optional<Author> findById(Long id) { return Optional.ofNullable(authors.get(id)); }
+                @Override public List<Author> findAll() { return new ArrayList<>(authors.values()); }
             };
 
             service = new ReportingService(colPersist, bookPersist, authPersist);
@@ -119,15 +87,15 @@ class ReportingServiceTest {
 
         @Test
         @DisplayName("should return correct collection reports from data")
-        void shouldReturnReports() {
-            List<CollectionReport> reports = service.generateCollectionReports();
+        void shouldReturnReports() throws IOException {
+            final List<CollectionReport> reports = service.generateCollectionReports();
             assertEquals(2, reports.size(), "Should have two collection reports");
 
-            CollectionReport sciFiReport = reports.stream()
+            final CollectionReport sciFiReport = reports.stream()
                 .filter(r -> r.collectionName().equals("Sci-Fi")).findFirst().orElseThrow();
-            List<BookReport> sciBooks = sciFiReport.books();
+            final List<BookReport> sciBooks = sciFiReport.books();
             assertEquals(2, sciBooks.size());
-            Map<String, String> titleToAuthor = sciBooks.stream()
+            final Map<String, String> titleToAuthor = sciBooks.stream()
                 .collect(Collectors.toMap(BookReport::title, BookReport::authorName));
             assertEquals("Frank Herbert", titleToAuthor.get("Dune"));
             assertEquals("William Gibson", titleToAuthor.get("Neuromancer"));
@@ -139,8 +107,8 @@ class ReportingServiceTest {
             service.generateCollectionReports();
             assertTrue(Files.exists(reportPath), "Report file should be created");
 
-            List<String> lines = Files.readAllLines(reportPath);
-            assertTrue(lines.get(0).contains("Library Report - " + LocalDate.now().format(fmt)));
+            final List<String> lines = Files.readAllLines(reportPath);
+            assertTrue(lines.getFirst().contains("Library Report - " + LocalDate.now().format(fmt)));
             assertTrue(lines.contains("Collection: Sci-Fi"));
             assertTrue(lines.contains("Collection: Fantasy"));
             assertTrue(lines.stream().anyMatch(l -> l.trim().startsWith("Title") && l.contains("| Author")));

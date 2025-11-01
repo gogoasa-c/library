@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
@@ -16,7 +15,7 @@ public abstract class AbstractFileRepository<T> {
     private final String filePath;
     private final ObjectMapper objectMapper;
     private final TypeReference<List<T>> typeReference;
-    private final AtomicLong idGenerator;
+    private Long idGenerator;
     private final Function<T, Long> idExtractor;
     private final Logger logger;
 
@@ -30,13 +29,13 @@ public abstract class AbstractFileRepository<T> {
         this.typeReference = typeReference;
         this.idExtractor = idExtractor;
         createFileIfNotExists();
-        this.idGenerator = new AtomicLong(getMaxId());
+        this.idGenerator = getMaxId();
         this.logger = Logger.getLogger(this.getClass().getName());
     }
 
     protected T save(T entity) {
         List<T> entities = readFromFile();
-        T savedEntity = setId(entity, idGenerator.incrementAndGet());
+        T savedEntity = setId(entity, ++idGenerator);
         entities.add(savedEntity);
         writeToFile(entities);
         return savedEntity;

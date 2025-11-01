@@ -173,7 +173,11 @@ class CLIInputParserTest {
             // write a minimal report file to emulate real behaviour
             String header = "Library Report - " + LocalDate.now().format(DATE_FMT);
             List<String> lines = List.of(header, "Collection: RCol", "Book: Reported Book");
-            Files.write(reportPath, lines);
+            try {
+                Files.write(reportPath, lines);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             return List.of(new CollectionReport("Dummy name",
                 List.of(new BookReport("Dummy title", "Dummy author name"))));
         };

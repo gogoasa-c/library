@@ -7,6 +7,8 @@ import java.util.Optional;
 
 public interface BookPersistence {
     Book addBook(Book book);
+
     Optional<Book> findById(Long id);
+
     List<Book> findAll();
 }

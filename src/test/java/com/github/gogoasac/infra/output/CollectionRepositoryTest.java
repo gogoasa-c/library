@@ -35,7 +35,7 @@ class CollectionRepositoryTest {
         void save_ShouldCreateNewCollectionWithGeneratedId() {
             Collection collection = new Collection(null, "Test Collection");
 
-            Collection savedCollection = repository.save(collection);
+            Collection savedCollection = repository.addCollection(collection);
 
             assertNotNull(savedCollection.id());
             assertEquals(collection.name(), savedCollection.name());
@@ -47,8 +47,8 @@ class CollectionRepositoryTest {
             Collection collection1 = new Collection(null, "Collection 1");
             Collection collection2 = new Collection(null, "Collection 2");
 
-            Collection savedCollection1 = repository.save(collection1);
-            Collection savedCollection2 = repository.save(collection2);
+            Collection savedCollection1 = repository.addCollection(collection1);
+            Collection savedCollection2 = repository.addCollection(collection2);
 
             assertNotEquals(savedCollection1.id(), savedCollection2.id());
         }
@@ -58,8 +58,8 @@ class CollectionRepositoryTest {
         void save_WithSameName_ShouldCreateDistinctEntries() {
             String collectionName = "Duplicate Name";
 
-            Collection collection1 = repository.save(new Collection(null, collectionName));
-            Collection collection2 = repository.save(new Collection(null, collectionName));
+            Collection collection1 = repository.addCollection(new Collection(null, collectionName));
+            Collection collection2 = repository.addCollection(new Collection(null, collectionName));
 
             assertNotEquals(collection1.id(), collection2.id());
             List<Collection> collections = repository.findAll();
@@ -75,7 +75,7 @@ class CollectionRepositoryTest {
         @Test
         @DisplayName("Should return collection when exists")
         void findById_WhenCollectionExists_ShouldReturnCollection() {
-            Collection collection = repository.save(new Collection(null, "Test Collection"));
+            Collection collection = repository.addCollection(new Collection(null, "Test Collection"));
 
             Optional<Collection> found = repository.findById(collection.id());
 
@@ -98,8 +98,8 @@ class CollectionRepositoryTest {
         @Test
         @DisplayName("Should return all collections when collections exist")
         void findAll_WhenCollectionsExist_ShouldReturnAllCollections() {
-            Collection collection1 = repository.save(new Collection(null, "Collection 1"));
-            Collection collection2 = repository.save(new Collection(null, "Collection 2"));
+            Collection collection1 = repository.addCollection(new Collection(null, "Collection 1"));
+            Collection collection2 = repository.addCollection(new Collection(null, "Collection 2"));
 
             List<Collection> collections = repository.findAll();
 
@@ -123,7 +123,7 @@ class CollectionRepositoryTest {
         @Test
         @DisplayName("Should persist data between repository instances")
         void persistenceTest_ShouldPersistBetweenRepositoryInstances() {
-            Collection collection = repository.save(new Collection(null, "Persistent Collection"));
+            Collection collection = repository.addCollection(new Collection(null, "Persistent Collection"));
 
             CollectionRepository newRepository = new CollectionRepository();
             Optional<Collection> found = newRepository.findById(collection.id());

@@ -16,7 +16,7 @@ public class CollectionRepository extends AbstractFileRepository<Collection> imp
     }
 
     @Override
-    public Collection save(Collection collection) {
+    public Collection addCollection(Collection collection) {
         return super.save(collection);
     }
 

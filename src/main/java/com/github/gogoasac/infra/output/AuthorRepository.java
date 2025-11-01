@@ -15,6 +15,10 @@ public class AuthorRepository extends AbstractFileRepository<Author> implements 
         super(FILE_PATH, new TypeReference<>() {}, Author::id);
     }
 
+    public AuthorRepository(final String filePath) {
+        super(filePath, new TypeReference<>() {}, Author::id);
+    }
+
     @Override
     public Author addAuthor(Author author) {
         return save(author);

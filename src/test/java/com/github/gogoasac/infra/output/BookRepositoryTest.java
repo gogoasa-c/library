@@ -13,14 +13,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("BookRepository Tests")
 class BookRepositoryTest {
-    private static final String FILE_PATH = "Books.json";
+    private static final String FILE_PATH = "Books_test.json";
     private BookRepository repository;
     private Author testAuthor;
     private Collection testCollection;
 
     @BeforeEach
     void setUp() {
-        repository = new BookRepository();
+        repository = new BookRepository(FILE_PATH);
         testAuthor = new Author(1L, "Test Author");
         testCollection = new Collection(1L, "Test Collection");
     }
@@ -130,7 +130,7 @@ class BookRepositoryTest {
                 new Book(null, "Persistent Book", testAuthor.id(), testCollection.id(), 2024)
             );
 
-            BookRepository newRepository = new BookRepository();
+            BookRepository newRepository = new BookRepository(FILE_PATH);
             Optional<Book> found = newRepository.findById(book.id());
 
             assertTrue(found.isPresent());
@@ -147,7 +147,7 @@ class BookRepositoryTest {
                 new Book(null, "Complex Book", authorId, collectionId, 2024)
             );
 
-            BookRepository newRepository = new BookRepository();
+            BookRepository newRepository = new BookRepository(FILE_PATH);
             Optional<Book> found = newRepository.findById(book.id());
 
             assertTrue(found.isPresent());

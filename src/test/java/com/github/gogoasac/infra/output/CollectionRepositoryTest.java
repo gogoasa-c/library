@@ -11,12 +11,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("CollectionRepository Tests")
 class CollectionRepositoryTest {
-    private static final String FILE_PATH = "Collections.json";
+    private static final String FILE_PATH = "Collections_test.json";
     private CollectionRepository repository;
 
     @BeforeEach
     void setUp() {
-        repository = new CollectionRepository();
+        repository = new CollectionRepository(FILE_PATH);
     }
 
     @AfterEach
@@ -98,8 +98,8 @@ class CollectionRepositoryTest {
         @Test
         @DisplayName("Should return all collections when collections exist")
         void findAll_WhenCollectionsExist_ShouldReturnAllCollections() {
-            Collection collection1 = repository.addCollection(new Collection(null, "Collection 1"));
-            Collection collection2 = repository.addCollection(new Collection(null, "Collection 2"));
+            repository.addCollection(new Collection(null, "Collection 1"));
+            repository.addCollection(new Collection(null, "Collection 2"));
 
             List<Collection> collections = repository.findAll();
 
@@ -125,7 +125,7 @@ class CollectionRepositoryTest {
         void persistenceTest_ShouldPersistBetweenRepositoryInstances() {
             Collection collection = repository.addCollection(new Collection(null, "Persistent Collection"));
 
-            CollectionRepository newRepository = new CollectionRepository();
+            CollectionRepository newRepository = new CollectionRepository(FILE_PATH);
             Optional<Collection> found = newRepository.findById(collection.id());
 
             assertTrue(found.isPresent());
@@ -138,7 +138,7 @@ class CollectionRepositoryTest {
             File file = new File(FILE_PATH);
             file.delete();
 
-            new CollectionRepository();
+            new CollectionRepository(FILE_PATH);
 
             assertTrue(file.exists());
         }

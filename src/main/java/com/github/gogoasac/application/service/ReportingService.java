@@ -17,78 +17,90 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ReportingService implements ReportingInput {
-    private final CollectionPersistence collectionPersistence;
-    private final BookPersistence bookPersistence;
-    private final AuthorPersistence authorPersistence;
+public record ReportingService(CollectionPersistence collectionPersistence, BookPersistence bookPersistence,
+                               AuthorPersistence authorPersistence) implements ReportingInput {
 
-    public ReportingService(CollectionPersistence collectionPersistence,
-                            BookPersistence bookPersistence,
-                            AuthorPersistence authorPersistence) {
-        this.collectionPersistence = collectionPersistence;
-        this.bookPersistence = bookPersistence;
-        this.authorPersistence = authorPersistence;
-    }
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
     public List<CollectionReport> generateCollectionReports() {
-        List<Collection> collections = collectionPersistence.findAll();
-        Map<Long, List<Book>> booksByCollection = bookPersistence.findAll()
-            .stream()
-            .collect(Collectors.groupingBy(Book::collectionId));
+        final List<Collection> collections = collectionPersistence.findAll();
+        final Map<Long, List<Book>> booksByCollection = groupBooksByCollection(bookPersistence.findAll());
+        final List<CollectionReport> reports = buildReports(collections, booksByCollection);
 
-        List<CollectionReport> reports = collections.stream()
-            .map(collection -> new CollectionReport(
-                collection.name(),
-                booksByCollection.getOrDefault(collection.id(), List.of()).stream()
-                    .map(this::mapToBookReport)
-                    .collect(Collectors.toList())
-            ))
-            .collect(Collectors.toList());
+        final String date = LocalDate.now().format(DATE_FMT);
+        final String fileName = "report_" + date + ".txt";
+        final String content = renderReportText(reports, date);
+        writeReportFile(fileName, content);
 
-        writeReportFile(reports);
-        return reports;
+        return Collections.unmodifiableList(reports);
     }
 
-    private BookReport mapToBookReport(Book book) {
-        Author author = authorPersistence.findById(book.authorId())
-            .orElseThrow(() -> new IllegalArgumentException(
-                "Author with ID " + book.authorId() + " does not exist."));
+    private Map<Long, List<Book>> groupBooksByCollection(final List<Book> books) {
+        return books.stream().collect(Collectors.groupingBy(Book::collectionId));
+    }
+
+    private List<CollectionReport> buildReports(final List<Collection> collections,
+                                                final Map<Long, List<Book>> booksByCollection) {
+        return collections.stream()
+            .map(col -> {
+                final List<BookReport> bookReports = booksByCollection
+                    .getOrDefault(col.id(), Collections.emptyList())
+                    .stream()
+                    .map(this::mapToBookReport)
+                    .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+                return new CollectionReport(col.name(), bookReports);
+            })
+            .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+    }
+
+    private BookReport mapToBookReport(final Book book) {
+        final Author author = authorPersistence.findById(book.authorId())
+            .orElseThrow(() -> new IllegalArgumentException("Author with ID " + book.authorId() + " does not exist."));
         return new BookReport(book.title(), author.name());
     }
 
-    private void writeReportFile(List<CollectionReport> reports) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String date = LocalDate.now().format(formatter);
-        String fileName = "report_" + date + ".txt";
-        Path path = Paths.get(fileName);
-        StringBuilder sb = new StringBuilder();
-        // report header
+    private String renderReportText(final List<CollectionReport> reports, final String date) {
+        final StringBuilder sb = new StringBuilder();
         sb.append("Library Report - ").append(date).append(System.lineSeparator()).append(System.lineSeparator());
-        for (CollectionReport report : reports) {
-            String header = "Collection: " + report.collectionName();
+        for (final CollectionReport report : reports) {
+            final String header = "Collection: " + report.collectionName();
             sb.append(header).append(System.lineSeparator());
-            sb.append("-".repeat(header.length())).append(System.lineSeparator());
-            // table header
-            String titleCol = "Title";
-            String authorCol = "Author";
+            sb.append(repeat('-', header.length())).append(System.lineSeparator());
+
+            final String titleCol = "Title";
+            final String authorCol = "Author";
             sb.append(String.format("  %-30s | %s", titleCol, authorCol)).append(System.lineSeparator());
-            sb.append(String.format("  %s | %s", "-".repeat(30), "-".repeat(authorCol.length()))).append(System.lineSeparator());
-            // entries
-            for (var book : report.books()) {
+            sb.append(String.format("  %-30s | %s", repeat('-', 30), repeat('-', authorCol.length()))).append(System.lineSeparator());
+
+            for (final BookReport book : report.books()) {
                 sb.append(String.format("  %-30s | %s", book.title(), book.authorName()))
                   .append(System.lineSeparator());
             }
             sb.append(System.lineSeparator());
         }
+        return sb.toString();
+    }
+
+    private void writeReportFile(final String fileName, final String content) {
+        final Path path = Paths.get(fileName);
         try {
-            Files.writeString(path, sb.toString());
-        } catch (IOException e) {
+            Files.writeString(path, content);
+        } catch (final IOException e) {
             throw new UncheckedIOException("Failed to write report file: " + fileName, e);
         }
+    }
+
+    private String repeat(final char c, final int count) {
+        if (count <= 0) return "";
+        final char[] arr = new char[count];
+        Arrays.fill(arr, c);
+        return new String(arr);
     }
 }

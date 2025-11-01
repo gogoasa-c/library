@@ -15,6 +15,10 @@ public class BookRepository extends AbstractFileRepository<Book> implements Book
         super(FILE_PATH, new TypeReference<>() {}, Book::id);
     }
 
+    public BookRepository(final String filePath) {
+        super(filePath, new TypeReference<>() {}, Book::id);
+    }
+
     @Override
     public Book addBook(Book book) {
         return super.save(book);

@@ -15,6 +15,10 @@ public class CollectionRepository extends AbstractFileRepository<Collection> imp
         super(FILE_PATH, new TypeReference<>() {}, Collection::id);
     }
 
+    public CollectionRepository(final String filePath) {
+        super(filePath, new TypeReference<>() {}, Collection::id);
+    }
+
     @Override
     public Collection addCollection(Collection collection) {
         return super.save(collection);

@@ -20,8 +20,6 @@ import java.util.Optional;
 /**
  * Simple terminal UI for the application. Keeps logic thin and delegates to application services.
  * The parser is IO-agnostic: input and output are injected so it can be tested easily.
- * Provides both a full constructor (recommended) and a no-arg convenience constructor
- * that delegates to the existing DependencyOrchestrator and System streams.
  */
 public final class CLIInputParser {
     private final AuthorManagementInput authorInput;

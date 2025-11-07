@@ -1,24 +1,18 @@
 package com.github.gogoasac.infra.input;
 
-import com.github.gogoasac.application.dto.AddBookCommand;
-import com.github.gogoasac.application.dto.AddCollectionCommand;
 import com.github.gogoasac.application.dto.CollectionReport;
 import com.github.gogoasac.application.input.AuthorManagementInput;
 import com.github.gogoasac.application.input.BookManagementInput;
 import com.github.gogoasac.application.input.CollectionManagementInput;
 import com.github.gogoasac.application.input.ReportingInput;
-import com.github.gogoasac.domain.entity.Author;
-import com.github.gogoasac.domain.entity.Book;
-import com.github.gogoasac.domain.entity.Collection;
 import com.github.gogoasac.infra.input.menu.AuthorMenu;
+import com.github.gogoasac.infra.input.menu.BookMenu;
+import com.github.gogoasac.infra.input.menu.CollectionMenu;
 import com.github.gogoasac.infra.input.reporting.ReportViewer;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Simple terminal UI for the application. Keeps logic thin and delegates to application services.
@@ -38,6 +32,8 @@ public final class CLIInputParser {
 
     private final ReportViewer reportViewer;
     private final AuthorMenu authorMenu;
+    private final CollectionMenu collectionMenu;
+    private final BookMenu bookMenu;
 
     public CLIInputParser(
         AuthorManagementInput authorInput,
@@ -53,14 +49,14 @@ public final class CLIInputParser {
         this.collectionInput = collectionInput;
         this.reportingInput = reportingInput;
 
-        // create single shared reader/writer (UTF-8)
         this.sharedReader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
         this.sharedWriter = out;
 
         this.reportViewer = reportViewer;
 
-        // instantiate top-level AuthorMenu with the shared IO objects
         this.authorMenu = new AuthorMenu(this.sharedWriter, this.sharedReader, this.authorInput);
+        this.collectionMenu = new CollectionMenu(this.sharedWriter, this.sharedReader, this.collectionInput);
+        this.bookMenu = new BookMenu(this.sharedWriter, this.sharedReader, this.bookInput, this.authorInput, this.collectionInput);
     }
 
     public void run() {
@@ -69,9 +65,9 @@ public final class CLIInputParser {
             printMainMenu();
             String option = readLine("Select an option: ").trim();
             switch (option) {
-                case "1" -> handleAuthorsMenu();
-                case "2" -> handleCollectionsMenu();
-                case "3" -> handleBooksMenu();
+                case "1" -> authorMenu.run();
+                case "2" -> collectionMenu.run();
+                case "3" -> bookMenu.run();
                 case "4" -> handleReports();
                 case "0" -> {
                     println("Exiting. Goodbye!");
@@ -92,50 +88,6 @@ public final class CLIInputParser {
         println("0) Exit");
     }
 
-    private void handleAuthorsMenu() {
-        this.authorMenu.run();
-    }
-
-    private void handleCollectionsMenu() {
-        while (true) {
-            println("\n--- Collections ---");
-            println("1) Add collection");
-            println("2) List all collections");
-            println("3) View collection by id");
-            println("9) Back");
-            String opt = readLine("Choose: ").trim();
-            switch (opt) {
-                case "1" -> addCollection();
-                case "2" -> listCollections();
-                case "3" -> viewCollectionById();
-                case "9" -> {
-                    return;
-                }
-                default -> println("Invalid option");
-            }
-        }
-    }
-
-    private void handleBooksMenu() {
-        while (true) {
-            println("\n--- Books ---");
-            println("1) Add book");
-            println("2) List all books");
-            println("3) View book by id");
-            println("9) Back");
-            String opt = readLine("Choose: ").trim();
-            switch (opt) {
-                case "1" -> addBook();
-                case "2" -> listBooks();
-                case "3" -> viewBookById();
-                case "9" -> {
-                    return;
-                }
-                default -> println("Invalid option");
-            }
-        }
-    }
-
     private void handleReports() {
         println("Generating collection reports...");
         try {
@@ -143,7 +95,6 @@ public final class CLIInputParser {
             println("Report generated. A file named report_YYYY-MM-DD.txt was written to the working directory.");
             println("Collections found: " + reports.size());
 
-            // Offer GUI view if we actually have collection reports
             if (!reports.isEmpty()) {
                 final String open = readLine("Open report in GUI? (y/N): ").trim();
                 if ("y".equalsIgnoreCase(open)) {
@@ -164,108 +115,6 @@ public final class CLIInputParser {
         }
     }
 
-    private void addCollection() {
-        String name = readLine("Collection name: ").trim();
-        if (name.isEmpty()) {
-            println("Name cannot be empty");
-            return;
-        }
-        try {
-            Collection created = collectionInput.addCollection(new AddCollectionCommand(name));
-            println("Collection created: " + created.toString());
-        } catch (Exception e) {
-            println("Failed to create collection: " + e.getMessage());
-        }
-    }
-
-    private void listCollections() {
-        List<Collection> collections = collectionInput.getAll();
-        if (collections.isEmpty()) {
-            println("No collections found.");
-            return;
-        }
-        println("Collections:");
-        collections.stream()
-                   .map(c -> "  " + c.toString())
-                   .forEach(this::println);
-    }
-
-    private void viewCollectionById() {
-        Long id = readLong("Collection id: ");
-        if (id == null) return;
-        try {
-            Collection c = collectionInput.getById(id);
-            println("Collection: " + c.toString());
-        } catch (Exception e) {
-            println("Error: " + e.getMessage());
-        }
-    }
-
-    private void addBook() {
-        println("To add a book you need to provide title, author id and collection id.");
-        authorMenu.listAllAuthors();
-        listCollections();
-
-        String title = readLine("Title: ").trim();
-        if (title.isEmpty()) {
-            println("Title cannot be empty");
-            return;
-        }
-        Long authorId = readLong("Author id: ");
-        if (authorId == null) return;
-        Long collectionId = readLong("Collection id: ");
-        if (collectionId == null) return;
-        Integer year = readInt("Publication year: ");
-        if (year == null) return;
-
-        try {
-            Book created = bookInput.addBook(new AddBookCommand(title, authorId, collectionId, year));
-            println("Book created: " + created.toString());
-        } catch (Exception e) {
-            println("Failed to create book: " + e.getMessage());
-        }
-    }
-
-    private void listBooks() {
-        List<Book> books = bookInput.getAll();
-        if (books.isEmpty()) {
-            println("No books found.");
-            return;
-        }
-        Map<Long, String> authorsById = authorInput.getAll().stream()
-                .collect(Collectors.toMap(Author::id, Author::toString));
-        Map<Long, String> collectionsById = collectionInput.getAll().stream()
-                .collect(Collectors.toMap(Collection::id, Collection::toString));
-
-        println("Books:");
-        books.stream()
-             .map(b -> {
-                 String authorStr = authorsById.getOrDefault(b.authorId(), "<unknown>");
-                 String collectionStr = collectionsById.getOrDefault(b.collectionId(), "<unknown>");
-                 return String.format("  %d) %s | Author: %s | Collection: %s | Year: %s",
-                         b.id(), b.title(), authorStr, collectionStr, b.publicationYear());
-             })
-             .forEach(this::println);
-    }
-
-    private void viewBookById() {
-        Long id = readLong("Book id: ");
-        if (id == null) return;
-        try {
-            Book b = bookInput.getById(id);
-            String authorStr = Optional.ofNullable(authorInput.getById(b.authorId()))
-                    .map(Author::toString)
-                    .orElse("<unknown>");
-            String collectionStr = Optional.ofNullable(collectionInput.getById(b.collectionId()))
-                    .map(Collection::toString)
-                    .orElse("<unknown>");
-            println(String.format("Book: id=%d, title=%s, author=%s, collection=%s, year=%s",
-                    b.id(), b.title(), authorStr, collectionStr, b.publicationYear()));
-        } catch (Exception e) {
-            println("Error: " + e.getMessage());
-        }
-    }
-
     private String readLine(String prompt) {
         sharedWriter.print(prompt);
         sharedWriter.flush();
@@ -274,34 +123,6 @@ public final class CLIInputParser {
             return line == null ? "" : line;
         } catch (IOException e) {
             return "";
-        }
-    }
-
-    private Long readLong(String prompt) {
-        String s = readLine(prompt).trim();
-        if (s.isEmpty()) {
-            println("Cancelled");
-            return null;
-        }
-        try {
-            return Long.parseLong(s);
-        } catch (NumberFormatException e) {
-            println("Invalid number: '" + s + "'");
-            return null;
-        }
-    }
-
-    private Integer readInt(String prompt) {
-        String s = readLine(prompt).trim();
-        if (s.isEmpty()) {
-            println("Cancelled");
-            return null;
-        }
-        try {
-            return Integer.parseInt(s);
-        } catch (NumberFormatException e) {
-            println("Invalid number: '" + s + "'");
-            return null;
         }
     }
 

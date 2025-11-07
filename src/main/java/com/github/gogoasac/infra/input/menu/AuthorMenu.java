@@ -9,10 +9,6 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.Objects;
 
-/*
-  Thin wrapper for backward compatibility.
-  Delegates to the nested CLIInputParser.AuthorMenu so all menus share the same IO contract when desired.
-*/
 public class AuthorMenu extends MenuHandler {
     private static final String MENU_NAME = "Authors";
 

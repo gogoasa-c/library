@@ -129,4 +129,20 @@ public abstract class MenuHandler {
             return null;
         }
     }
+
+    protected Integer readInt(final String prompt) {
+        final String s = this.readLine(prompt);
+
+        if (s.isEmpty()) {
+            this.printLine("Cancelled");
+            return null;
+        }
+
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            this.printLine("Invalid number: '" + s + "'");
+            return null;
+        }
+    }
 }

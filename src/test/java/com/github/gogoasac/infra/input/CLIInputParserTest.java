@@ -8,6 +8,7 @@ import com.github.gogoasac.application.input.ReportingInput;
 import com.github.gogoasac.domain.entity.Author;
 import com.github.gogoasac.domain.entity.Book;
 import com.github.gogoasac.domain.entity.Collection;
+import com.github.gogoasac.infra.input.menu.AuthorMenu;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -51,8 +52,9 @@ class CLIInputParserTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (PrintStream ps = new PrintStream(baos, true)) {
             InputStream in = new ByteArrayInputStream(input.getBytes());
+            final AuthorMenu authorMenu = new AuthorMenu(ps, in, authorInput);
             CLIInputParser parser = new CLIInputParser(authorInput, bookInput, collectionInput, reportingInput, in, ps,
-                list -> {});
+                list -> {}, authorMenu);
             parser.run();
         }
         return baos.toString();

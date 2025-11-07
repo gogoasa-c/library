@@ -4,28 +4,28 @@ import com.github.gogoasac.application.dto.AddAuthorCommand;
 import com.github.gogoasac.application.input.AuthorManagementInput;
 import com.github.gogoasac.domain.entity.Author;
 
-import java.io.BufferedReader;
-import java.io.PrintWriter;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.List;
 
 public class AuthorMenu extends MenuHandler {
+    private static final String MENU_NAME = "Authors";
+
     private final AuthorManagementInput authorInput;
 
-    public AuthorMenu(final String menuName,
-                      final PrintWriter writer,
-                      final BufferedReader reader,
+    public AuthorMenu(final PrintStream printStream,
+                      final InputStream inputStream,
                       final AuthorManagementInput authorManagementInput) {
-        super(menuName, writer, reader);
+        super(MENU_NAME, printStream, inputStream);
 
         super.setMenuItemList(List.of(
             new MenuItem("Add author", this::addAuthor),
             new MenuItem("List all authors", this::listAllAuthors),
-            new MenuItem("View author by id", this::viewAuthorById)));
+            new MenuItem("View author by id", this::viewAuthorById)
+        ));
 
         this.authorInput = authorManagementInput;
     }
-
-
 
     private void addAuthor() {
         final String name = super.readLine("Author name: ").trim();
@@ -37,7 +37,7 @@ public class AuthorMenu extends MenuHandler {
 
         try {
             final Author created = authorInput.addAuthor(new AddAuthorCommand(name));
-            super.printLine("Author created: " + created.toString());
+            super.printLine("Author created: " + created);
         } catch (Exception e) {
             super.printLine("Failed to create author: " + e.getMessage());
         }
@@ -46,29 +46,29 @@ public class AuthorMenu extends MenuHandler {
     private void listAllAuthors() {
         final List<Author> authors = authorInput.getAll();
 
-        if (authors.isEmpty()) {
+        if (authors == null || authors.isEmpty()) {
             super.printLine("No authors found.");
             return;
         }
 
         super.printLine("Authors:");
-
         authors.stream()
-            .map(a -> "  " + a.toString())
+            .map(a -> "  " + a)
             .forEach(super::printLine);
     }
 
     private void viewAuthorById() {
-        Long id = super.readLong("Author id: ");
-
-        if (id == null) return;
-
-        try {
-            Author a = authorInput.getById(id);
-            super.printLine("Author: " + a.toString());
-        } catch (Exception e) {
-            super.printLine("Error: " + e.getMessage());
+        final Long id = super.readLong("Author id: ");
+        if (id == null) {
+            return;
         }
-    }
 
+        final Author author = authorInput.getById(id);
+        if (author == null) {
+            super.printLine("Author not found.");
+            return;
+        }
+
+        super.printLine("Author: " + author);
+    }
 }

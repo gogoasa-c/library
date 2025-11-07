@@ -2,11 +2,10 @@ package com.github.gogoasac.infra.input.menu;
 
 import org.junit.jupiter.api.*;
 
-import java.io.BufferedReader;
-import java.io.PrintWriter;
-import java.io.StringReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStreamWriter;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -21,21 +20,21 @@ class MenuHandlerTest {
     @DisplayName("displayMenu")
     class DisplayMenuTests {
         private ByteArrayOutputStream outputStream;
-        private PrintWriter writer;
+        private PrintStream printStream;
         private MenuHandler handler;
 
         @BeforeEach
         void setUp() {
             outputStream = new ByteArrayOutputStream();
-            writer = new PrintWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8), true);
+            printStream = new PrintStream(outputStream, true, StandardCharsets.UTF_8);
 
             final List<MenuItem> items = Arrays.asList(
                 new MenuItem("First item", () -> {}),
                 new MenuItem("Second item", () -> {})
             );
 
-            final BufferedReader reader = new BufferedReader(new StringReader(""));
-            handler = new MenuHandler("Test Menu", writer, reader) { };
+            final InputStream emptyInput = new ByteArrayInputStream(new byte[0]);
+            handler = new MenuHandler("Test Menu", printStream, emptyInput) { };
             handler.setMenuItemList(items);
         }
 
@@ -43,8 +42,6 @@ class MenuHandlerTest {
         @DisplayName("should write menu header, items and Back entry to writer")
         void shouldWriteMenuHeaderItemsAndBackEntry() {
             handler.displayMenu();
-            writer.flush();
-
             final String written = outputStream.toString(StandardCharsets.UTF_8);
 
             assertTrue(written.contains("--- Test Menu ---"), "Menu header expected");
@@ -58,7 +55,7 @@ class MenuHandlerTest {
     @DisplayName("pickOption")
     class PickOptionTests {
         private ByteArrayOutputStream outputStream;
-        private PrintWriter writer;
+        private PrintStream printStream;
         private AtomicBoolean firstActionCalled;
         private AtomicBoolean secondActionCalled;
         private MenuHandler handler;
@@ -66,7 +63,7 @@ class MenuHandlerTest {
         @BeforeEach
         void setUp() {
             outputStream = new ByteArrayOutputStream();
-            writer = new PrintWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8), true);
+            printStream = new PrintStream(outputStream, true, StandardCharsets.UTF_8);
 
             firstActionCalled = new AtomicBoolean(false);
             secondActionCalled = new AtomicBoolean(false);
@@ -77,8 +74,8 @@ class MenuHandlerTest {
             );
 
             // choose the first menu item by providing "1" (user visible index 1 -> internal index 0)
-            final BufferedReader reader = new BufferedReader(new StringReader("1\n"));
-            handler = new MenuHandler("Test Menu", writer, reader) { };
+            final InputStream input = new ByteArrayInputStream("1\n".getBytes(StandardCharsets.UTF_8));
+            handler = new MenuHandler("Test Menu", printStream, input) { };
             handler.setMenuItemList(items);
         }
 
@@ -86,11 +83,10 @@ class MenuHandlerTest {
         @DisplayName("should execute the chosen menu action for a valid numeric choice")
         void shouldExecuteChosenMenuActionForValidNumericChoice() {
             handler.pickOption();
-            writer.flush();
+            final String written = outputStream.toString(StandardCharsets.UTF_8);
 
             assertTrue(firstActionCalled.get(), "Expected first action to be executed");
             assertFalse(secondActionCalled.get(), "Second action should not have been executed");
-            final String written = outputStream.toString(StandardCharsets.UTF_8);
             assertTrue(written.contains("Choose:"), "Prompt should have been written to the writer");
         }
     }
@@ -101,11 +97,12 @@ class MenuHandlerTest {
         @Test
         @DisplayName("should throw NumberFormatException for non-numeric input")
         void shouldThrowWhenNonNumericInput() {
-            final PrintWriter writer = new PrintWriter(System.out, true);
+            final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            final PrintStream printStream = new PrintStream(outputStream, true, StandardCharsets.UTF_8);
             final List<MenuItem> items = List.of(new MenuItem("Item", () -> {}));
-            final BufferedReader reader = new BufferedReader(new StringReader("not-a-number\n"));
+            final InputStream input = new ByteArrayInputStream("not-a-number\n".getBytes(StandardCharsets.UTF_8));
 
-            final MenuHandler handler = new MenuHandler("Test Menu", writer, reader) { };
+            final MenuHandler handler = new MenuHandler("Test Menu", printStream, input) { };
             handler.setMenuItemList(items);
 
             assertThrows(NumberFormatException.class, handler::pickOption);
@@ -114,11 +111,12 @@ class MenuHandlerTest {
         @Test
         @DisplayName("should throw IllegalArgumentException with clear message for out-of-range numeric input")
         void shouldThrowWhenChoiceOutOfRangeWithClearMessage() {
-            final PrintWriter writer = new PrintWriter(System.out, true);
+            final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            final PrintStream printStream = new PrintStream(outputStream, true, StandardCharsets.UTF_8);
             final List<MenuItem> items = List.of(new MenuItem("Item", () -> {}));
-            final BufferedReader reader = new BufferedReader(new StringReader("99\n"));
+            final InputStream input = new ByteArrayInputStream("99\n".getBytes(StandardCharsets.UTF_8));
 
-            final MenuHandler handler = new MenuHandler("Test Menu", writer, reader) { };
+            final MenuHandler handler = new MenuHandler("Test Menu", printStream, input) { };
             handler.setMenuItemList(items);
 
             final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,

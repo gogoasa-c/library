@@ -12,6 +12,7 @@ import com.github.gogoasac.application.service.BookManagementService;
 import com.github.gogoasac.application.service.CollectionManagementService;
 import com.github.gogoasac.application.service.ReportingService;
 import com.github.gogoasac.infra.input.CLIInputParser;
+import com.github.gogoasac.infra.input.menu.AuthorMenu;
 import com.github.gogoasac.infra.input.reporting.ReportViewer;
 import com.github.gogoasac.infra.input.reporting.ReportViewerSwing;
 import com.github.gogoasac.infra.output.AuthorRepository;
@@ -33,6 +34,8 @@ public class DependencyOrchestrator {
     private final CLIInputParser cliInputParser;
     public final ReportViewer reportViewer;
 
+    private final AuthorMenu authorMenu;
+
     private DependencyOrchestrator() {
         this.bookPersistence = new BookRepository();
         this.authorPersistence = new AuthorRepository();
@@ -48,6 +51,8 @@ public class DependencyOrchestrator {
         this.reportingInput = new ReportingService(collectionPersistence, bookPersistence, authorPersistence);
         this.reportViewer = new ReportViewerSwing();
 
+        this.authorMenu = new AuthorMenu(System.out, System.in, this.authorManagementInput);
+
         this.cliInputParser = new CLIInputParser(
             this.authorManagementInput,
             this.bookManagementInput,
@@ -55,7 +60,8 @@ public class DependencyOrchestrator {
             this.reportingInput,
             System.in,
             System.out,
-            this.reportViewer
+            this.reportViewer,
+            this.authorMenu
         );
     }
 

@@ -8,10 +8,10 @@ import com.github.gogoasac.application.input.AuthorManagementInput;
 import com.github.gogoasac.application.input.BookManagementInput;
 import com.github.gogoasac.application.input.CollectionManagementInput;
 import com.github.gogoasac.application.input.ReportingInput;
-import com.github.gogoasac.config.DependencyOrchestrator;
 import com.github.gogoasac.domain.entity.Author;
 import com.github.gogoasac.domain.entity.Book;
 import com.github.gogoasac.domain.entity.Collection;
+import com.github.gogoasac.infra.input.menu.AuthorMenu;
 import com.github.gogoasac.infra.input.reporting.ReportViewer;
 
 import java.io.*;
@@ -39,18 +39,20 @@ public final class CLIInputParser {
     private final Supplier<String> lineReader;
 
     private final ReportViewer reportViewer;
+    private final AuthorMenu authorMenu;
 
-    public CLIInputParser() {
-        this(
-            DependencyOrchestrator.INSTANCE.authorManagementInput,
-            DependencyOrchestrator.INSTANCE.bookManagementInput,
-            DependencyOrchestrator.INSTANCE.collectionManagementInput,
-            DependencyOrchestrator.INSTANCE.reportingInput,
-            System.in,
-            System.out,
-            DependencyOrchestrator.INSTANCE.reportViewer
-        );
-    }
+//    public CLIInputParser() {
+//        this(
+//            DependencyOrchestrator.INSTANCE.authorManagementInput,
+//            DependencyOrchestrator.INSTANCE.bookManagementInput,
+//            DependencyOrchestrator.INSTANCE.collectionManagementInput,
+//            DependencyOrchestrator.INSTANCE.reportingInput,
+//            System.in,
+//            System.out,
+//            DependencyOrchestrator.INSTANCE.reportViewer,
+//            DependencyOrchestrator.INSTANCE
+//        );
+//    }
 
     public CLIInputParser(
         AuthorManagementInput authorInput,
@@ -59,7 +61,8 @@ public final class CLIInputParser {
         ReportingInput reportingInput,
         InputStream in,
         PrintStream out,
-        ReportViewer reportViewer
+        ReportViewer reportViewer,
+        AuthorMenu authorMenu
     ) {
 
         this.authorInput = authorInput;
@@ -80,6 +83,8 @@ public final class CLIInputParser {
         };
 
         this.reportViewer = reportViewer;
+
+        this.authorMenu = authorMenu;
     }
 
     public void run() {
@@ -112,23 +117,24 @@ public final class CLIInputParser {
     }
 
     private void handleAuthorsMenu() {
-        while (true) {
-            println("\n--- Authors ---");
-            println("1) Add author");
-            println("2) List all authors");
-            println("3) View author by id");
-            println("9) Back");
-            String opt = readLine("Choose: ").trim();
-            switch (opt) {
-                case "1" -> addAuthor();
-                case "2" -> listAuthors();
-                case "3" -> viewAuthorById();
-                case "9" -> {
-                    return;
-                }
-                default -> println("Invalid option");
-            }
-        }
+        this.authorMenu.run();
+//        while (true) {
+//            println("\n--- Authors ---");
+//            println("1) Add author");
+//            println("2) List all authors");
+//            println("3) View author by id");
+//            println("9) Back");
+//            String opt = readLine("Choose: ").trim();
+//            switch (opt) {
+//                case "1" -> addAuthor();
+//                case "2" -> listAuthors();
+//                case "3" -> viewAuthorById();
+//                case "9" -> {
+//                    return;
+//                }
+//                default -> println("Invalid option");
+//            }
+//        }
     }
 
     private void handleCollectionsMenu() {

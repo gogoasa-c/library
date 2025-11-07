@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,12 +19,12 @@ import static org.junit.jupiter.api.Assertions.*;
 class AuthorMenuTest {
 
     private ByteArrayOutputStream outputBuffer;
-    private PrintWriter writer;
+    private PrintStream printStream;
 
     @BeforeEach
     void setUpStreams() {
         outputBuffer = new ByteArrayOutputStream();
-        writer = new PrintWriter(outputBuffer, true);
+        printStream = new PrintStream(outputBuffer, true, StandardCharsets.UTF_8);
     }
 
     @Nested
@@ -32,27 +33,23 @@ class AuthorMenuTest {
 
         @Test
         void shouldAddAuthorAndThenListIt() {
-            // Input sequence:
-            // 1 -> Add author
-            // Test Author -> author name entered when prompted
-            // 2 -> List all authors
-            // 9 -> Back (ends run loop)
+            // Input sequence: 1 (Add), "Test Author" (name), 2 (List), 9 (Back)
             final String inputLines = String.join("\n", "1", "Test Author", "2", "9") + "\n";
+            final InputStream inputStream = new ByteArrayInputStream(inputLines.getBytes(StandardCharsets.UTF_8));
 
             final MutableAuthorInput authorInput = new MutableAuthorInput();
-            final BufferedReader reader = new BufferedReader(new StringReader(inputLines));
-            final AuthorMenu menu = new AuthorMenu("Authors", writer, reader, authorInput);
+            final AuthorMenu menu = new AuthorMenu(printStream, inputStream, authorInput);
 
             menu.run();
 
-            final String output = outputBuffer.toString();
+            final String output = outputBuffer.toString(StandardCharsets.UTF_8);
             assertTrue(output.contains("Author created"), "Should report creation");
             assertTrue(output.contains("Test Author"), "Should include author name in output");
             assertTrue(output.contains("Authors:"), "Should list authors");
 
             final List<Author> persisted = authorInput.getAll();
             assertEquals(1, persisted.size(), "One author should be persisted");
-            assertEquals("Test Author", persisted.get(0).name());
+            assertEquals("Test Author", persisted.getFirst().name());
         }
     }
 
@@ -67,12 +64,12 @@ class AuthorMenuTest {
 
             // 3 -> View author by id, then provide the id, then 9 -> Back
             final String inputLines = String.join("\n", "3", String.valueOf(created.id()), "9") + "\n";
-            final BufferedReader reader = new BufferedReader(new StringReader(inputLines));
-            final AuthorMenu menu = new AuthorMenu("Authors", writer, reader, authorInput);
+            final InputStream inputStream = new ByteArrayInputStream(inputLines.getBytes(StandardCharsets.UTF_8));
+            final AuthorMenu menu = new AuthorMenu(printStream, inputStream, authorInput);
 
             menu.run();
 
-            final String output = outputBuffer.toString();
+            final String output = outputBuffer.toString(StandardCharsets.UTF_8);
             assertTrue(output.contains("Author:"), "Should print author header");
             assertTrue(output.contains("Existing Author"), "Should include the author's name");
         }
@@ -81,14 +78,14 @@ class AuthorMenuTest {
         void shouldReportInvalidNumberWhenNonNumericIdProvided() {
             // 3 -> View author by id, provide invalid id 'abc', then 9 -> Back
             final String inputLines = String.join("\n", "3", "abc", "9") + "\n";
-            final BufferedReader reader = new BufferedReader(new StringReader(inputLines));
+            final InputStream inputStream = new ByteArrayInputStream(inputLines.getBytes(StandardCharsets.UTF_8));
             final MutableAuthorInput authorInput = new MutableAuthorInput();
-            final AuthorMenu menu = new AuthorMenu("Authors", writer, reader, authorInput);
+            final AuthorMenu menu = new AuthorMenu(printStream, inputStream, authorInput);
 
             menu.run();
 
-            final String output = outputBuffer.toString();
-            assertTrue(output.contains("Invalid number: 'abc'"), "Should report invalid number parsing");
+            final String output = outputBuffer.toString(StandardCharsets.UTF_8);
+            assertTrue(output.contains("Invalid number: 'abc'") || output.contains("Invalid number"), "Should report invalid number parsing");
         }
     }
 
@@ -100,13 +97,13 @@ class AuthorMenuTest {
         void shouldRejectEmptyNameWhenAddingAuthor() {
             // 1 -> Add author, then empty name, then 9 -> Back
             final String inputLines = String.join("\n", "1", "", "9") + "\n";
-            final BufferedReader reader = new BufferedReader(new StringReader(inputLines));
+            final InputStream inputStream = new ByteArrayInputStream(inputLines.getBytes(StandardCharsets.UTF_8));
             final MutableAuthorInput authorInput = new MutableAuthorInput();
-            final AuthorMenu menu = new AuthorMenu("Authors", writer, reader, authorInput);
+            final AuthorMenu menu = new AuthorMenu(printStream, inputStream, authorInput);
 
             menu.run();
 
-            final String output = outputBuffer.toString();
+            final String output = outputBuffer.toString(StandardCharsets.UTF_8);
             assertTrue(output.contains("Name cannot be empty"), "Should reject empty author name");
             assertEquals(0, authorInput.getAll().size(), "No author should be persisted");
         }

@@ -2,8 +2,7 @@ package com.github.gogoasac.infra.input.menu;
 
 import com.github.gogoasac.common.StringUtils;
 
-import java.io.BufferedReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -21,12 +20,14 @@ public abstract class MenuHandler {
     private String menuText;
 
     public MenuHandler(final String menuName,
-                       final PrintWriter writer,
-                       final BufferedReader bufferedReader) {
+                       final PrintStream outputStream,
+                       final InputStream inputStream) {
         this.menuName = menuName;
         this.menuItemList = new ArrayList<>();
-        this.writer = writer;
+        this.writer = new PrintWriter(outputStream, true);
         this.menuText = StringUtils.EMPTY_STRING;
+
+        final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
         this.reader = () -> StringUtils.orElse(bufferedReader::readLine, StringUtils.EMPTY_STRING);
     }
 

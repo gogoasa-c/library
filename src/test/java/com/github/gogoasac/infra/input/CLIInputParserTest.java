@@ -51,7 +51,8 @@ class CLIInputParserTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (PrintStream ps = new PrintStream(baos, true)) {
             InputStream in = new ByteArrayInputStream(input.getBytes());
-            CLIInputParser parser = new CLIInputParser(authorInput, bookInput, collectionInput, reportingInput, in, ps);
+            CLIInputParser parser = new CLIInputParser(authorInput, bookInput, collectionInput, reportingInput, in, ps,
+                list -> {});
             parser.run();
         }
         return baos.toString();
@@ -186,7 +187,7 @@ class CLIInputParserTest {
         BookManagementInput b = new NoopBookInput();
         CollectionManagementInput c = new NoopCollectionInput();
 
-        String input = String.join("\n", "4", "0") + "\n";
+        String input = String.join("\n", "4", "n", "0") + "\n";
         String out = runWithInput(input, a, b, c, reporting);
 
         assertTrue(out.contains("Generating collection reports"), "Should indicate generation");

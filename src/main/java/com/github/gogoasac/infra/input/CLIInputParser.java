@@ -3,6 +3,7 @@ package com.github.gogoasac.infra.input;
 import com.github.gogoasac.application.dto.AddAuthorCommand;
 import com.github.gogoasac.application.dto.AddBookCommand;
 import com.github.gogoasac.application.dto.AddCollectionCommand;
+import com.github.gogoasac.application.dto.CollectionReport;
 import com.github.gogoasac.application.input.AuthorManagementInput;
 import com.github.gogoasac.application.input.BookManagementInput;
 import com.github.gogoasac.application.input.CollectionManagementInput;
@@ -11,13 +12,9 @@ import com.github.gogoasac.config.DependencyOrchestrator;
 import com.github.gogoasac.domain.entity.Author;
 import com.github.gogoasac.domain.entity.Book;
 import com.github.gogoasac.domain.entity.Collection;
+import com.github.gogoasac.infra.input.reporting.ReportViewer;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +38,8 @@ public final class CLIInputParser {
 
     private final Supplier<String> lineReader;
 
+    private final ReportViewer reportViewer;
+
     public CLIInputParser() {
         this(
             DependencyOrchestrator.INSTANCE.authorManagementInput,
@@ -48,7 +47,8 @@ public final class CLIInputParser {
             DependencyOrchestrator.INSTANCE.collectionManagementInput,
             DependencyOrchestrator.INSTANCE.reportingInput,
             System.in,
-            System.out
+            System.out,
+            DependencyOrchestrator.INSTANCE.reportViewer
         );
     }
 
@@ -58,8 +58,10 @@ public final class CLIInputParser {
         CollectionManagementInput collectionInput,
         ReportingInput reportingInput,
         InputStream in,
-        PrintStream out
+        PrintStream out,
+        ReportViewer reportViewer
     ) {
+
         this.authorInput = authorInput;
         this.bookInput = bookInput;
         this.collectionInput = collectionInput;
@@ -76,6 +78,8 @@ public final class CLIInputParser {
                 return "";
             }
         };
+
+        this.reportViewer = reportViewer;
     }
 
     public void run() {
@@ -170,9 +174,26 @@ public final class CLIInputParser {
     private void handleReports() {
         println("Generating collection reports...");
         try {
-            List<?> reports = reportingInput.generateCollectionReports();
+            final List<CollectionReport> reports = reportingInput.generateCollectionReports();
             println("Report generated. A file named report_YYYY-MM-DD.txt was written to the working directory.");
             println("Collections found: " + reports.size());
+
+            // Offer GUI view if we actually have collection reports
+            if (!reports.isEmpty()) {
+                final String open = readLine("Open report in GUI? (y/N): ").trim();
+                if ("y".equalsIgnoreCase(open)) {
+                    try {
+                        this.reportViewer.showReports(reports);
+                        println("Report viewer opened.");
+                    } catch (ClassCastException ex) {
+                        println("Unable to open GUI viewer: report format not recognized.");
+                    } catch (Exception ex) {
+                        println("Failed to open report viewer: " + ex.getMessage());
+                    }
+                } else {
+                    println("Skipping GUI view.");
+                }
+            }
         } catch (Exception e) {
             println("Failed to generate reports: " + e.getMessage());
         }

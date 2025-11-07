@@ -14,6 +14,31 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
+/**
+ * Simple file-backed repository base class for JSON persistence of domain records.
+ *
+ * <p>Responsibilities:
+ * - Read and write a collection of T instances to/from a JSON file.
+ * - Provide basic persistence primitives: save (append with id assignment),
+ *   findById, findAll and a generic updateById that atomically replaces an
+ *   entity by id.
+ * - Maintain a simple numeric id generator based on the current maximum id in
+ *   the backing file.
+ *
+ * <p>Serialization notes:
+ * - The mapper is pre-configured with {@link JavaTimeModule} and timestamps are
+ *   written as textual ISO dates (WRITE_DATES_AS_TIMESTAMPS disabled). This
+ *   ensures java.time types such as {@code LocalDate} are handled correctly.
+ *
+ * <p>Usage:
+ * - Subclasses provide a concrete {@link #setId(Object, Long)} implementation
+ *   to set or re-create an entity with the supplied id.
+ * - Call {@link #save(Object)} to persist a new entity (id assigned automatically).
+ * - Call {@link #updateById(Long, java.util.function.Function)} to perform an
+ *   in-place update: the updater receives the current instance and must return
+ *   the new instance to persist (the id will be enforced).
+ *
+ */
 public abstract class AbstractFileRepository<T> {
     private final String filePath;
     private final ObjectMapper objectMapper;

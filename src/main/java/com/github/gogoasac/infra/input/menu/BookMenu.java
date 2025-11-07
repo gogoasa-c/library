@@ -10,6 +10,7 @@ import com.github.gogoasac.domain.entity.Collection;
 
 import java.io.BufferedReader;
 import java.io.PrintStream;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,6 +22,9 @@ import java.util.stream.Collectors;
  */
 public final class BookMenu extends MenuHandler {
     private static final String MENU_NAME = "Books";
+
+    // new: formatter for borrowed date
+    private static final DateTimeFormatter BORROWED_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private final BookManagementInput bookInput;
     private final AuthorManagementInput authorInput;
@@ -36,7 +40,8 @@ public final class BookMenu extends MenuHandler {
         super.setMenuItemList(List.of(
             new MenuItem("Add book", this::addBook),
             new MenuItem("List all books", this::listAllBooks),
-            new MenuItem("View book by id", this::viewBookById)
+            new MenuItem("View book by id", this::viewBookById),
+            new MenuItem("Borrow a book", this::borrowBook)
         ));
 
         this.bookInput = Objects.requireNonNull(bookManagementInput, "bookManagementInput");
@@ -110,8 +115,11 @@ public final class BookMenu extends MenuHandler {
              .map(b -> {
                  final String authorStr = authorsById.getOrDefault(b.authorId(), "<unknown>");
                  final String collectionStr = collectionsById.getOrDefault(b.collectionId(), "<unknown>");
-                 return String.format("  %d) %s | Author: %s | Collection: %s | Year: %s",
-                         b.id(), b.title(), authorStr, collectionStr, b.publicationYear());
+                 final String borrowedInfo = b.borrowedAt() == null
+                         ? ""
+                         : " | Borrowed: " + b.borrowedAt().format(BORROWED_FMT);
+                 return String.format("  %d) %s | Author: %s | Collection: %s | Year: %s%s",
+                         b.id(), b.title(), authorStr, collectionStr, b.publicationYear(), borrowedInfo);
              })
              .forEach(super::printLine);
     }
@@ -127,8 +135,23 @@ public final class BookMenu extends MenuHandler {
 
         final String authorStr = Optional.ofNullable(authorInput.getById(b.authorId())).map(Author::toString).orElse("<unknown>");
         final String collectionStr = Optional.ofNullable(collectionInput.getById(b.collectionId())).map(Collection::toString).orElse("<unknown>");
-        super.printLine(String.format("Book: id=%d, title=%s, author=%s, collection=%s, year=%s",
+
+        final StringBuilder details = new StringBuilder();
+        details.append(String.format("Book: id=%d, title=%s, author=%s, collection=%s, year=%s",
                 b.id(), b.title(), authorStr, collectionStr, b.publicationYear()));
+
+        if (b.borrowedAt() != null) {
+            details.append(String.format(" | BorrowedAt: %s | Borrowed: %s",
+                    b.borrowedAt().format(BORROWED_FMT), b.isBorrowed()));
+        }
+
+        super.printLine(details.toString());
+    }
+
+    private void borrowBook() {
+        final Long id = super.readLong("Book id to borrow: ");
+        if (id == null) return;
+
+        this.bookInput.borrow(id);
     }
 }
-

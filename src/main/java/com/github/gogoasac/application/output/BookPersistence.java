@@ -11,4 +11,6 @@ public interface BookPersistence {
     Optional<Book> findById(Long id);
 
     List<Book> findAll();
+
+    Optional<Book> updateBook(final Book book);
 }

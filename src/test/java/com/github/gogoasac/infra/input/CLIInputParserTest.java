@@ -243,6 +243,9 @@ class CLIInputParserTest {
         public List<Book> getAll() {
             return List.of();
         }
+
+        @Override
+        public void borrow(Long bookId) {}
     }
 
     private static class MutableAuthorInput implements AuthorManagementInput {
@@ -319,6 +322,11 @@ class CLIInputParserTest {
         @Override
         public List<Book> getAll() {
             return List.copyOf(list);
+        }
+
+        @Override
+        public void borrow(Long bookId) {
+
         }
     }
 }

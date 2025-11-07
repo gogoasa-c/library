@@ -161,6 +161,10 @@ public final class BookMenu extends MenuHandler {
         final Long id = super.readLong("Book id to borrow: ");
         if (id == null) return;
 
-        this.bookInput.borrow(id);
+        try {
+            this.bookInput.borrow(id);
+        } catch (Exception exception) {
+            super.printLine("Failed to borrow book: " + exception.getMessage());
+        }
     }
 }

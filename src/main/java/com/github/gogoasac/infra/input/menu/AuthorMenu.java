@@ -4,19 +4,24 @@ import com.github.gogoasac.application.dto.AddAuthorCommand;
 import com.github.gogoasac.application.input.AuthorManagementInput;
 import com.github.gogoasac.domain.entity.Author;
 
-import java.io.InputStream;
+import java.io.BufferedReader;
 import java.io.PrintStream;
 import java.util.List;
+import java.util.Objects;
 
+/*
+  Thin wrapper for backward compatibility.
+  Delegates to the nested CLIInputParser.AuthorMenu so all menus share the same IO contract when desired.
+*/
 public class AuthorMenu extends MenuHandler {
     private static final String MENU_NAME = "Authors";
 
     private final AuthorManagementInput authorInput;
 
     public AuthorMenu(final PrintStream printStream,
-                      final InputStream inputStream,
+                      final BufferedReader sharedReader,
                       final AuthorManagementInput authorManagementInput) {
-        super(MENU_NAME, printStream, inputStream);
+        super(MENU_NAME, printStream, sharedReader);
 
         super.setMenuItemList(List.of(
             new MenuItem("Add author", this::addAuthor),
@@ -24,11 +29,11 @@ public class AuthorMenu extends MenuHandler {
             new MenuItem("View author by id", this::viewAuthorById)
         ));
 
-        this.authorInput = authorManagementInput;
+        this.authorInput = Objects.requireNonNull(authorManagementInput, "authorManagementInput");
     }
 
     private void addAuthor() {
-        final String name = super.readLine("Author name: ").trim();
+        final String name = super.readLine("Author name: ");
 
         if (name.isEmpty()) {
             super.printLine("Name cannot be empty");
@@ -43,8 +48,8 @@ public class AuthorMenu extends MenuHandler {
         }
     }
 
-    private void listAllAuthors() {
-        final List<Author> authors = authorInput.getAll();
+    public void listAllAuthors() {
+        final java.util.List<Author> authors = authorInput.getAll();
 
         if (authors == null || authors.isEmpty()) {
             super.printLine("No authors found.");

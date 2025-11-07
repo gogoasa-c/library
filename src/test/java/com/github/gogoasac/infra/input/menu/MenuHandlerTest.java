@@ -5,7 +5,9 @@ import org.junit.jupiter.api.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -34,7 +36,8 @@ class MenuHandlerTest {
             );
 
             final InputStream emptyInput = new ByteArrayInputStream(new byte[0]);
-            handler = new MenuHandler("Test Menu", printStream, emptyInput) { };
+            final BufferedReader sharedReader = new BufferedReader(new InputStreamReader(emptyInput, StandardCharsets.UTF_8));
+            handler = new MenuHandler("Test Menu", printStream, sharedReader) { };
             handler.setMenuItemList(items);
         }
 
@@ -45,8 +48,8 @@ class MenuHandlerTest {
             final String written = outputStream.toString(StandardCharsets.UTF_8);
 
             assertTrue(written.contains("--- Test Menu ---"), "Menu header expected");
-            assertTrue(written.contains("0) First item"), "First item label expected");
-            assertTrue(written.contains("1) Second item"), "Second item label expected");
+            assertTrue(written.contains("1) First item"), "First item label expected");
+            assertTrue(written.contains("2) Second item"), "Second item label expected");
             assertTrue(written.contains("9) Back"), "Back entry expected");
         }
     }
@@ -75,7 +78,8 @@ class MenuHandlerTest {
 
             // choose the first menu item by providing "1" (user visible index 1 -> internal index 0)
             final InputStream input = new ByteArrayInputStream("1\n".getBytes(StandardCharsets.UTF_8));
-            handler = new MenuHandler("Test Menu", printStream, input) { };
+            final BufferedReader sharedReader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
+            handler = new MenuHandler("Test Menu", printStream, sharedReader) { };
             handler.setMenuItemList(items);
         }
 
@@ -101,8 +105,9 @@ class MenuHandlerTest {
             final PrintStream printStream = new PrintStream(outputStream, true, StandardCharsets.UTF_8);
             final List<MenuItem> items = List.of(new MenuItem("Item", () -> {}));
             final InputStream input = new ByteArrayInputStream("not-a-number\n".getBytes(StandardCharsets.UTF_8));
+            final BufferedReader sharedReader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
 
-            final MenuHandler handler = new MenuHandler("Test Menu", printStream, input) { };
+            final MenuHandler handler = new MenuHandler("Test Menu", printStream, sharedReader) { };
             handler.setMenuItemList(items);
 
             assertThrows(NumberFormatException.class, handler::pickOption);
@@ -115,8 +120,9 @@ class MenuHandlerTest {
             final PrintStream printStream = new PrintStream(outputStream, true, StandardCharsets.UTF_8);
             final List<MenuItem> items = List.of(new MenuItem("Item", () -> {}));
             final InputStream input = new ByteArrayInputStream("99\n".getBytes(StandardCharsets.UTF_8));
+            final BufferedReader sharedReader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
 
-            final MenuHandler handler = new MenuHandler("Test Menu", printStream, input) { };
+            final MenuHandler handler = new MenuHandler("Test Menu", printStream, sharedReader) { };
             handler.setMenuItemList(items);
 
             final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,

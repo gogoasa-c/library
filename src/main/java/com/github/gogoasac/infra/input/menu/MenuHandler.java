@@ -4,7 +4,8 @@ import com.github.gogoasac.common.StringUtils;
 
 import java.io.*;
 import java.util.*;
-import java.util.function.Supplier;
+
+/* ...existing code... */
 
 public abstract class MenuHandler {
     private final static String MENU_SIZE_NOT_SUPPORTED = "Supplied menu size not supported.";
@@ -14,21 +15,20 @@ public abstract class MenuHandler {
 
     private final String menuName;
     private final List<MenuItem> menuItemList;
-    private final PrintWriter writer;
-    private final Supplier<String> reader;
+    private final PrintStream writer;
+    private final BufferedReader reader;
 
     private String menuText;
 
+    // changed constructor to accept a shared PrintStream and BufferedReader
     public MenuHandler(final String menuName,
                        final PrintStream outputStream,
-                       final InputStream inputStream) {
+                       final BufferedReader sharedReader) {
         this.menuName = menuName;
         this.menuItemList = new ArrayList<>();
-        this.writer = new PrintWriter(outputStream, true);
+        this.writer = Objects.requireNonNull(outputStream, "outputStream");
+        this.reader = Objects.requireNonNull(sharedReader, "sharedReader");
         this.menuText = StringUtils.EMPTY_STRING;
-
-        final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-        this.reader = () -> StringUtils.orElse(bufferedReader::readLine, StringUtils.EMPTY_STRING);
     }
 
     protected void setMenuItemList(final List<MenuItem> menuItemList) {
@@ -53,7 +53,8 @@ public abstract class MenuHandler {
 
         stringBuilder.append("\n--- %s ---".formatted(this.menuName));
         for (int itemIndex = 0; itemIndex < this.menuItemList.size(); itemIndex += 1) {
-            stringBuilder.append("\n%d) %s".formatted(itemIndex, this.menuItemList.get(itemIndex).content()));
+            // show 1-based indices to the user
+            stringBuilder.append("\n%d) %s".formatted(itemIndex + 1, this.menuItemList.get(itemIndex).content()));
         }
         stringBuilder.append("\n%d) Back".formatted(GO_BACK_MENU_ITEM_NO));
 
@@ -91,16 +92,21 @@ public abstract class MenuHandler {
     }
 
     private boolean isIndexValid(final int index) {
-        return (index >= 0 && index <= this.menuItemList.size()) || index == GO_BACK_MENU_ITEM_NO - 1;
+        return (index >= 0 && index < this.menuItemList.size()) || index == GO_BACK_MENU_ITEM_NO - 1;
     }
 
     protected String readLine() {
-        return this.reader.get().trim();
+        try {
+            String line = this.reader.readLine();
+            return line == null ? "" : line.trim();
+        } catch (IOException e) {
+            return "";
+        }
     }
 
     protected String readLine(final String prompt) {
         this.printLine(prompt);
-        return this.reader.get().trim();
+        return readLine();
     }
 
     protected void printLine(final String prompt) {
@@ -109,7 +115,7 @@ public abstract class MenuHandler {
     }
 
     protected Long readLong(final String prompt) {
-        final String s = this.readLine(prompt).trim();
+        final String s = this.readLine(prompt);
 
         if (s.isEmpty()) {
             this.printLine("Cancelled");

@@ -36,9 +36,10 @@ class AuthorMenuTest {
             // Input sequence: 1 (Add), "Test Author" (name), 2 (List), 9 (Back)
             final String inputLines = String.join("\n", "1", "Test Author", "2", "9") + "\n";
             final InputStream inputStream = new ByteArrayInputStream(inputLines.getBytes(StandardCharsets.UTF_8));
+            final BufferedReader sharedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 
             final MutableAuthorInput authorInput = new MutableAuthorInput();
-            final AuthorMenu menu = new AuthorMenu(printStream, inputStream, authorInput);
+            final AuthorMenu menu = new AuthorMenu(printStream, sharedReader, authorInput);
 
             menu.run();
 
@@ -65,7 +66,8 @@ class AuthorMenuTest {
             // 3 -> View author by id, then provide the id, then 9 -> Back
             final String inputLines = String.join("\n", "3", String.valueOf(created.id()), "9") + "\n";
             final InputStream inputStream = new ByteArrayInputStream(inputLines.getBytes(StandardCharsets.UTF_8));
-            final AuthorMenu menu = new AuthorMenu(printStream, inputStream, authorInput);
+            final BufferedReader sharedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            final AuthorMenu menu = new AuthorMenu(printStream, sharedReader, authorInput);
 
             menu.run();
 
@@ -79,8 +81,9 @@ class AuthorMenuTest {
             // 3 -> View author by id, provide invalid id 'abc', then 9 -> Back
             final String inputLines = String.join("\n", "3", "abc", "9") + "\n";
             final InputStream inputStream = new ByteArrayInputStream(inputLines.getBytes(StandardCharsets.UTF_8));
+            final BufferedReader sharedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
             final MutableAuthorInput authorInput = new MutableAuthorInput();
-            final AuthorMenu menu = new AuthorMenu(printStream, inputStream, authorInput);
+            final AuthorMenu menu = new AuthorMenu(printStream, sharedReader, authorInput);
 
             menu.run();
 
@@ -98,8 +101,9 @@ class AuthorMenuTest {
             // 1 -> Add author, then empty name, then 9 -> Back
             final String inputLines = String.join("\n", "1", "", "9") + "\n";
             final InputStream inputStream = new ByteArrayInputStream(inputLines.getBytes(StandardCharsets.UTF_8));
+            final BufferedReader sharedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
             final MutableAuthorInput authorInput = new MutableAuthorInput();
-            final AuthorMenu menu = new AuthorMenu(printStream, inputStream, authorInput);
+            final AuthorMenu menu = new AuthorMenu(printStream, sharedReader, authorInput);
 
             menu.run();
 
@@ -132,3 +136,4 @@ class AuthorMenuTest {
         }
     }
 }
+

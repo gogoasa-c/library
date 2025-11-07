@@ -1,6 +1,5 @@
 package com.github.gogoasac.infra.input;
 
-import com.github.gogoasac.application.dto.AddAuthorCommand;
 import com.github.gogoasac.application.dto.AddBookCommand;
 import com.github.gogoasac.application.dto.AddCollectionCommand;
 import com.github.gogoasac.application.dto.CollectionReport;
@@ -15,10 +14,10 @@ import com.github.gogoasac.infra.input.menu.AuthorMenu;
 import com.github.gogoasac.infra.input.reporting.ReportViewer;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -33,26 +32,12 @@ public final class CLIInputParser {
     private final CollectionManagementInput collectionInput;
     private final ReportingInput reportingInput;
 
-    private final BufferedReader reader;
-    private final PrintWriter writer;
-
-    private final Supplier<String> lineReader;
+    // single shared IO objects
+    private final BufferedReader sharedReader;
+    private final PrintStream sharedWriter;
 
     private final ReportViewer reportViewer;
     private final AuthorMenu authorMenu;
-
-//    public CLIInputParser() {
-//        this(
-//            DependencyOrchestrator.INSTANCE.authorManagementInput,
-//            DependencyOrchestrator.INSTANCE.bookManagementInput,
-//            DependencyOrchestrator.INSTANCE.collectionManagementInput,
-//            DependencyOrchestrator.INSTANCE.reportingInput,
-//            System.in,
-//            System.out,
-//            DependencyOrchestrator.INSTANCE.reportViewer,
-//            DependencyOrchestrator.INSTANCE
-//        );
-//    }
 
     public CLIInputParser(
         AuthorManagementInput authorInput,
@@ -61,30 +46,21 @@ public final class CLIInputParser {
         ReportingInput reportingInput,
         InputStream in,
         PrintStream out,
-        ReportViewer reportViewer,
-        AuthorMenu authorMenu
+        ReportViewer reportViewer
     ) {
-
         this.authorInput = authorInput;
         this.bookInput = bookInput;
         this.collectionInput = collectionInput;
         this.reportingInput = reportingInput;
 
-        this.reader = new BufferedReader(new InputStreamReader(in));
-        this.writer = new PrintWriter(out, true);
-
-        this.lineReader = () -> {
-            try {
-                String line = reader.readLine();
-                return line == null ? "" : line;
-            } catch (IOException e) {
-                return "";
-            }
-        };
+        // create single shared reader/writer (UTF-8)
+        this.sharedReader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+        this.sharedWriter = out;
 
         this.reportViewer = reportViewer;
 
-        this.authorMenu = authorMenu;
+        // instantiate top-level AuthorMenu with the shared IO objects
+        this.authorMenu = new AuthorMenu(this.sharedWriter, this.sharedReader, this.authorInput);
     }
 
     public void run() {
@@ -118,23 +94,6 @@ public final class CLIInputParser {
 
     private void handleAuthorsMenu() {
         this.authorMenu.run();
-//        while (true) {
-//            println("\n--- Authors ---");
-//            println("1) Add author");
-//            println("2) List all authors");
-//            println("3) View author by id");
-//            println("9) Back");
-//            String opt = readLine("Choose: ").trim();
-//            switch (opt) {
-//                case "1" -> addAuthor();
-//                case "2" -> listAuthors();
-//                case "3" -> viewAuthorById();
-//                case "9" -> {
-//                    return;
-//                }
-//                default -> println("Invalid option");
-//            }
-//        }
     }
 
     private void handleCollectionsMenu() {
@@ -205,43 +164,6 @@ public final class CLIInputParser {
         }
     }
 
-    private void addAuthor() {
-        String name = readLine("Author name: ").trim();
-        if (name.isEmpty()) {
-            println("Name cannot be empty");
-            return;
-        }
-        try {
-            Author created = authorInput.addAuthor(new AddAuthorCommand(name));
-            println("Author created: " + created.toString());
-        } catch (Exception e) {
-            println("Failed to create author: " + e.getMessage());
-        }
-    }
-
-    private void listAuthors() {
-        List<Author> authors = authorInput.getAll();
-        if (authors.isEmpty()) {
-            println("No authors found.");
-            return;
-        }
-        println("Authors:");
-        authors.stream()
-               .map(a -> "  " + a.toString())
-               .forEach(this::println);
-    }
-
-    private void viewAuthorById() {
-        Long id = readLong("Author id: ");
-        if (id == null) return;
-        try {
-            Author a = authorInput.getById(id);
-            println("Author: " + a.toString());
-        } catch (Exception e) {
-            println("Error: " + e.getMessage());
-        }
-    }
-
     private void addCollection() {
         String name = readLine("Collection name: ").trim();
         if (name.isEmpty()) {
@@ -281,7 +203,7 @@ public final class CLIInputParser {
 
     private void addBook() {
         println("To add a book you need to provide title, author id and collection id.");
-        listAuthors();
+        authorMenu.listAllAuthors();
         listCollections();
 
         String title = readLine("Title: ").trim();
@@ -345,10 +267,14 @@ public final class CLIInputParser {
     }
 
     private String readLine(String prompt) {
-        writer.print(prompt);
-        writer.flush();
-        String line = lineReader.get();
-        return line == null ? "" : line;
+        sharedWriter.print(prompt);
+        sharedWriter.flush();
+        try {
+            String line = sharedReader.readLine();
+            return line == null ? "" : line;
+        } catch (IOException e) {
+            return "";
+        }
     }
 
     private Long readLong(String prompt) {
@@ -380,6 +306,7 @@ public final class CLIInputParser {
     }
 
     private void println(String s) {
-        writer.println(s);
+        sharedWriter.println(s);
     }
 }
+

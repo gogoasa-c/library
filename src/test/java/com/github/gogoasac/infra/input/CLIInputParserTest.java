@@ -8,13 +8,13 @@ import com.github.gogoasac.application.input.ReportingInput;
 import com.github.gogoasac.domain.entity.Author;
 import com.github.gogoasac.domain.entity.Book;
 import com.github.gogoasac.domain.entity.Collection;
-import com.github.gogoasac.infra.input.menu.AuthorMenu;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -50,14 +50,14 @@ class CLIInputParserTest {
                                 CollectionManagementInput collectionInput,
                                 ReportingInput reportingInput) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (PrintStream ps = new PrintStream(baos, true)) {
-            InputStream in = new ByteArrayInputStream(input.getBytes());
-            final AuthorMenu authorMenu = new AuthorMenu(ps, in, authorInput);
+        try (PrintStream ps = new PrintStream(baos, true, StandardCharsets.UTF_8)) {
+            InputStream in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+            // let CLIInputParser create the internal menus but pass shared IO
             CLIInputParser parser = new CLIInputParser(authorInput, bookInput, collectionInput, reportingInput, in, ps,
-                list -> {}, authorMenu);
+                list -> {});
             parser.run();
         }
-        return baos.toString();
+        return baos.toString(StandardCharsets.UTF_8);
     }
 
     @Test
@@ -121,17 +121,13 @@ class CLIInputParserTest {
         MutableBookInput bookInput = new MutableBookInput(authorInput, collectionInput);
         ReportingInput reporting = List::of;
 
-        // Sequence:
-        // 1 (Authors) -> 1 (Add) -> "Author A" -> 9 (Back)
-        // 2 (Collections) -> 1 (Add) -> "Coll A" -> 9 (Back)
-        // 3 (Books) -> 1 (Add) -> title, authorId, collectionId, year -> 2 (List) -> 9 -> 0
         String input = String.join("\n",
             "1", "1", "Author A", "9",
             "2", "1", "Coll A", "9",
             "3", "1",
             "Great Book",
-            "1",   // author id
-            "1",   // collection id
+            "1",
+            "1",
             "2025",
             "2", "9",
             "0") + "\n";
@@ -140,11 +136,9 @@ class CLIInputParserTest {
 
         assertTrue(out.contains("Book created"), "Should report book creation");
         assertTrue(out.contains("Great Book"), "Should include book title");
-        // list should show resolved author/collection strings
         assertTrue(out.contains("Author A"), "Should show author name in listing");
         assertTrue(out.contains("Coll A"), "Should show collection name in listing");
 
-        // Ensure persisted-like state in mocks
         List<Book> books = bookInput.getAll();
         assertEquals(1, books.size());
         Book saved = books.getFirst();

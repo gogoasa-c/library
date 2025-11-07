@@ -12,6 +12,8 @@ import com.github.gogoasac.application.service.BookManagementService;
 import com.github.gogoasac.application.service.CollectionManagementService;
 import com.github.gogoasac.application.service.ReportingService;
 import com.github.gogoasac.infra.input.CLIInputParser;
+import com.github.gogoasac.infra.input.reporting.ReportViewer;
+import com.github.gogoasac.infra.input.reporting.ReportViewerSwing;
 import com.github.gogoasac.infra.output.AuthorRepository;
 import com.github.gogoasac.infra.output.BookRepository;
 import com.github.gogoasac.infra.output.CollectionRepository;
@@ -29,6 +31,7 @@ public class DependencyOrchestrator {
     public final ReportingInput reportingInput;
 
     private final CLIInputParser cliInputParser;
+    public final ReportViewer reportViewer;
 
     private DependencyOrchestrator() {
         this.bookPersistence = new BookRepository();
@@ -43,14 +46,17 @@ public class DependencyOrchestrator {
             collectionPersistence
         );
         this.reportingInput = new ReportingService(collectionPersistence, bookPersistence, authorPersistence);
+        this.reportViewer = new ReportViewerSwing();
 
+        // pass System.in / System.out to CLIInputParser; it will create and reuse the shared reader/writer and internal menus
         this.cliInputParser = new CLIInputParser(
             this.authorManagementInput,
             this.bookManagementInput,
             this.collectionManagementInput,
             this.reportingInput,
             System.in,
-            System.out
+            System.out,
+            this.reportViewer
         );
     }
 

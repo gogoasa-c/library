@@ -7,7 +7,12 @@ import com.github.gogoasac.domain.entity.Author;
 
 import java.util.List;
 
-public record AuthorManagementService(AuthorPersistence authorPersistence) implements AuthorManagementInput {
+public final class AuthorManagementService implements AuthorManagementInput {
+    private final AuthorPersistence authorPersistence;
+
+    public AuthorManagementService(AuthorPersistence authorPersistence) {
+        this.authorPersistence = authorPersistence;
+    }
 
     @Override
     public Author addAuthor(AddAuthorCommand addAuthorCommand) {

@@ -7,8 +7,12 @@ import com.github.gogoasac.domain.entity.Collection;
 
 import java.util.List;
 
-public record CollectionManagementService(
-    CollectionPersistence collectionPersistence) implements CollectionManagementInput {
+public final class CollectionManagementService implements CollectionManagementInput {
+    private final CollectionPersistence collectionPersistence;
+
+    public CollectionManagementService(CollectionPersistence collectionPersistence) {
+        this.collectionPersistence = collectionPersistence;
+    }
 
     @Override
     public Collection addCollection(AddCollectionCommand addCollectionCommand) {

@@ -10,8 +10,14 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Collection menu: add / list / view collection by id.
- * Small focused class that uses shared streams and immutable/final locals.
+ * CLI menu handling collection-related interactions (add/list/view).
+ *
+ * <p>Concrete {@link MenuHandler} that presents the collection flows and
+ * delegates data operations to an injected {@link CollectionManagementInput}.
+ *
+ * <p>Behavior:
+ * - Validates input (non-empty names) and prints user-friendly messages.
+ * - Lists items using {@link Collection#toString()} for consistent display.
  */
 public final class CollectionMenu extends MenuHandler {
     private static final String MENU_NAME = "Collections";

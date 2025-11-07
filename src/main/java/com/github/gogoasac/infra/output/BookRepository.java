@@ -8,6 +8,19 @@ import com.github.gogoasac.infra.output.base.AbstractFileRepository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * File-backed repository for Book entities.
+ *
+ * <p>Persists {@link Book} records into a JSON file and provides basic CRUD
+ * operations required by the {@link BookPersistence} port. The repository
+ * guarantees id assignment on save and offers an {@code updateBook} operation
+ * that atomically replaces an existing record by id.
+ *
+ * <p>Notes:
+ * - The repository preserves the full Book shape (including borrowing state).
+ * - JSON (de)serialization supports Java time types via the configured mapper
+ *   in {@link com.github.gogoasac.infra.output.base.AbstractFileRepository}.
+ */
 public class BookRepository extends AbstractFileRepository<Book> implements BookPersistence {
     private static final String FILE_PATH = "Books.json";
 

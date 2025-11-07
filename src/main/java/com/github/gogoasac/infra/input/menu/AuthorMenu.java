@@ -8,6 +8,18 @@ import java.io.BufferedReader;
 import java.io.PrintStream;
 import java.util.List;
 
+/**
+ * CLI menu handling author-related interactions (add/list/view).
+ *
+ * <p>This concrete {@link MenuHandler} encapsulates the prompts and flows used
+ * to create and inspect authors from the command-line. It delegates actual
+ * persistence and retrieval to an injected {@link AuthorManagementInput}.
+ *
+ * <p>Notes:
+ * - Uses the shared {@link PrintStream} and {@link BufferedReader} contract
+ *   provided by {@link MenuHandler}, ensuring no conflicting readers are created.
+ * - Produces human-friendly lines using {@link Author#toString()} for readability.
+ */
 public class AuthorMenu extends MenuHandler {
     private static final String MENU_NAME = "Authors";
 

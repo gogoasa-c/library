@@ -48,7 +48,6 @@ public class DependencyOrchestrator {
         this.reportingInput = new ReportingService(collectionPersistence, bookPersistence, authorPersistence);
         this.reportViewer = new ReportViewerSwing();
 
-        // pass System.in / System.out to CLIInputParser; it will create and reuse the shared reader/writer and internal menus
         this.cliInputParser = new CLIInputParser(
             this.authorManagementInput,
             this.bookManagementInput,

@@ -8,6 +8,18 @@ import com.github.gogoasac.infra.output.base.AbstractFileRepository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * File-backed repository for Collection entities.
+ *
+ * <p>Uses {@link AbstractFileRepository} for file-based JSON persistence. This
+ * class provides the minimal surface required by {@link CollectionPersistence}
+ * and is intended to be used by application services to create, list and look
+ * up collection data used in listings and reports.
+ *
+ * <p>Notes:
+ * - Persistence concerns such as file paths and id generation are handled by
+ *   the base class; business validation belongs in the service layer.
+ */
 public class CollectionRepository extends AbstractFileRepository<Collection> implements CollectionPersistence {
     private static final String FILE_PATH = "Collections.json";
 

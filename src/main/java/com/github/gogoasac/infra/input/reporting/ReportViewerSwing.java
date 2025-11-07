@@ -13,8 +13,13 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * Simple Swing viewer for collection reports. Shows a scrollable text area with a rendered report.
- * Lightweight helper — used only when the user requests a GUI view from the CLI.
+ * Swing-based viewer for collection reports.
+ *
+ * <p>Creates a small interactive UI showing collections on the left and their
+ * books on the right. Provides double-click-to-open details and copy-to-clipboard
+ * actions for book entries.
+ *
+ * <p>Threading note: UI creation is dispatched via {@link SwingUtilities#invokeLater}
  */
 public class ReportViewerSwing implements ReportViewer {
 
@@ -151,12 +156,12 @@ public class ReportViewerSwing implements ReportViewer {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(sel, sel);
         });
 
-        final JPanel btns = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        btns.add(copy);
+        final JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panel.add(copy);
 
         final JPanel content = new JPanel(new BorderLayout(6, 6));
         content.add(new JScrollPane(area), BorderLayout.CENTER);
-        content.add(btns, BorderLayout.SOUTH);
+        content.add(panel, BorderLayout.SOUTH);
 
         final JOptionPane pane = new JOptionPane(content, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION);
         final JDialog dialog = pane.createDialog(parent, "Book Details");

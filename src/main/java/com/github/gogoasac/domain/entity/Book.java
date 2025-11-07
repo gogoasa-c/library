@@ -2,6 +2,18 @@ package com.github.gogoasac.domain.entity;
 
 import java.time.LocalDate;
 
+/**
+ * Domain record representing an immutable Book within the library domain.
+ *
+ * <p>The record holds identifying information (id, title), references to related
+ * entities (authorId, collectionId), a publication year and borrowing state
+ * (borrowedAt timestamp and a boolean flag).
+ *
+ * <p>Responsibility:
+ * - Provide an immutable data carrier for persistence, reporting and UI layers.
+ * - Expose simple domain behaviour (e.g. {@link #borrow()}) that returns a new
+ *   instance with updated borrowing state rather than mutating state.
+ */
 public record Book(
     Long id,
     String title,

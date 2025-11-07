@@ -5,6 +5,12 @@ import com.github.gogoasac.domain.entity.Book;
 
 import java.util.List;
 
+/**
+ * Input port defining the book management operations the application exposes.
+ *
+ * <p>Implementations should orchestrate validation and persistence and present
+ * a small, testable API for creating, retrieving and performing actions on books.
+ */
 public interface BookManagementInput {
     Book addBook(AddBookCommand addBookCommand);
     List<Book> getAll();

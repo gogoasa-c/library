@@ -23,6 +23,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * ReportingService
+ *
+ * <p>Implementation of the {@link ReportingInput} port. Responsibilities:
+ * - Query collection, book and author persistence ports to gather domain data.
+ * - Group books by collection and map domain books into presentation DTOs
+ *   ({@link BookReport}, {@link CollectionReport}).
+ * - Render a human-readable textual report and write it to disk.
+ *
+ * <p>Design notes:
+ * - Returns an immutable list of CollectionReport (the in-memory model) and
+ *   performs file-writing as a separate side-effect.
+ * - Includes borrowed-date information for books when available.
+ * - Uses small private helper methods for grouping, mapping and rendering to
+ *   keep the public method concise and easy to test.
+ */
 public record ReportingService(CollectionPersistence collectionPersistence, BookPersistence bookPersistence,
                                AuthorPersistence authorPersistence) implements ReportingInput {
 

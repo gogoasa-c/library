@@ -5,8 +5,27 @@ import com.github.gogoasac.common.StringUtils;
 import java.io.*;
 import java.util.*;
 
-/* ...existing code... */
-
+/**
+ * Abstract base class for simple terminal-based menus.
+ *
+ * <p>This class encapsulates the common rendering and input handling behaviour
+ * for textual menus used by the CLI. Concrete menus provide a list of
+ * {@link MenuItem} instances via {@link #setMenuItemList(List)} and implement
+ * domain-specific actions as Runnables.
+ *
+ * <p>Important details:
+ * - The class expects a shared {@link BufferedReader} and {@link PrintStream}
+ *   to be supplied so multiple menus and the CLI can share the same IO streams
+ *   (no second BufferedReader on the same InputStream).
+ * - It renders 1-based menu indices to the user and validates choices.
+ * - Input parsing is defensive: invalid numbers are handled and a cancelled
+ *   read returns empty results.
+ *
+ * <p>Design notes:
+ * - Keeps methods small and focused to enable simple unit testing.
+ * - Concrete subclasses should call {@link #setMenuItemList(List)} in their
+ *   constructor to define the menu contents.
+ */
 public abstract class MenuHandler {
     private final static String MENU_SIZE_NOT_SUPPORTED = "Supplied menu size not supported.";
     private final static String MENU_ITEM_INVALID = "Supplied menu item does not exist.";

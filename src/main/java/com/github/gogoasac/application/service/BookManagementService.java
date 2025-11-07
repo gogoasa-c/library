@@ -9,6 +9,16 @@ import com.github.gogoasac.domain.entity.Book;
 
 import java.util.List;
 
+/**
+ * Application service orchestrating book-related use cases.
+ *
+ * <p>This service implements the input port for book management and coordinates
+ * validation and persistence:
+ * - Validates that referenced author and collection exist before creating books.
+ * - Delegates persistence operations to {@link BookPersistence}.
+ * - Exposes a small domain action to borrow a book which composes the domain
+ *   {@link Book#borrow()} behaviour with repository updates.
+ */
 public final class BookManagementService implements BookManagementInput {
     private final BookPersistence bookPersistence;
     private final AuthorPersistence authorPersistence;

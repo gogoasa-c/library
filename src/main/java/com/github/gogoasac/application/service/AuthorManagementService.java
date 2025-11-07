@@ -7,6 +7,13 @@ import com.github.gogoasac.domain.entity.Author;
 
 import java.util.List;
 
+/**
+ * Application service providing author management use-cases.
+ *
+ * <p>Exposes creation, retrieval and listing operations and delegates storage to
+ * {@link AuthorPersistence}. The service keeps validation and orchestration
+ * responsibilities focused and easily testable.
+ */
 public final class AuthorManagementService implements AuthorManagementInput {
     private final AuthorPersistence authorPersistence;
 

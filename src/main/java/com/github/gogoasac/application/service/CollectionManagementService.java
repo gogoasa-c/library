@@ -7,6 +7,12 @@ import com.github.gogoasac.domain.entity.Collection;
 
 import java.util.List;
 
+/**
+ * Application service responsible for collection management.
+ *
+ * <p>Coordinates creation and retrieval of collections, delegating persistence
+ * concerns to {@link CollectionPersistence} and keeping business rules in one place.
+ */
 public final class CollectionManagementService implements CollectionManagementInput {
     private final CollectionPersistence collectionPersistence;
 

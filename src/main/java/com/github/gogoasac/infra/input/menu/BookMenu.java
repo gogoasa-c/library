@@ -18,7 +18,16 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Book menu: add / list / view book by id. Uses shared streams and other inputs.
+ * CLI menu handling book-related interactions (add/list/view/borrow).
+ *
+ * <p>This {@link MenuHandler} coordinates interactions across the book, author
+ * and collection input ports. It resolves author/collection names for listings
+ * and delegates domain actions (e.g. borrowing) to the injected
+ * {@link BookManagementInput}.
+ *
+ * <p>Notes:
+ * - Uses shared IO (BufferedReader/PrintStream) to avoid competing readers.
+ * - Displays borrowed date information when present for easy inspection.
  */
 public final class BookMenu extends MenuHandler {
     private static final String MENU_NAME = "Books";

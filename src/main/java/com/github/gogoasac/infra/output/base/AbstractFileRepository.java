@@ -2,6 +2,9 @@ package com.github.gogoasac.infra.output.base;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +28,11 @@ public abstract class AbstractFileRepository<T> {
         Function<T, Long> idExtractor
     ) {
         this.filePath = filePath;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = JsonMapper.builder()
+            .addModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .findAndAddModules()
+            .build();
         this.typeReference = typeReference;
         this.idExtractor = idExtractor;
         createFileIfNotExists();
@@ -49,6 +56,31 @@ public abstract class AbstractFileRepository<T> {
 
     protected List<T> findAll() {
         return readFromFile();
+    }
+
+    /**
+     * Update an existing entity identified by id by applying the updater function.
+     * The updater may return a new instance; setId(...) will be used to ensure the persisted entity has the expected id.
+     * Returns Optional.empty() when no entity with the given id exists.
+     */
+    protected Optional<T> updateById(final Long id, final Function<T, T> updater) {
+        if (id == null) {
+            return Optional.empty();
+        }
+
+        final List<T> entities = readFromFile();
+        for (int idx = 0; idx < entities.size(); idx++) {
+            final T current = entities.get(idx);
+            final Long currentId = idExtractor.apply(current);
+            if (currentId != null && currentId.equals(id)) {
+                final T updatedCandidate = updater.apply(current);
+                final T updatedWithId = setId(updatedCandidate, id);
+                entities.set(idx, updatedWithId);
+                writeToFile(entities);
+                return Optional.of(updatedWithId);
+            }
+        }
+        return Optional.empty();
     }
 
     private List<T> readFromFile() {

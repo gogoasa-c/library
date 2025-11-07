@@ -232,5 +232,28 @@ class BookMenuTest {
         public List<Book> getAll() {
             return List.copyOf(storage);
         }
+
+        @Override
+        public void borrow(final Long bookId) {
+            if (bookId == null) {
+                throw new IllegalArgumentException("bookId required");
+            }
+            for (int i = 0; i < storage.size(); i++) {
+                final Book current = storage.get(i);
+                if (current.id().equals(bookId)) {
+                    // use domain convenience method if present, otherwise set manually
+                    Book updated;
+                    try {
+                        updated = current.borrow();
+                    } catch (UnsupportedOperationException | IllegalStateException ex) {
+                        // fallback: create a new Book with borrowed flag true if record supports the fields
+                        updated = new Book(current.id(), current.title(), current.authorId(), current.collectionId(), current.publicationYear(), java.time.LocalDate.now(), true);
+                    }
+                    storage.set(i, updated);
+                    return;
+                }
+            }
+            throw new IllegalArgumentException("Book not found: " + bookId);
+        }
     }
 }

@@ -60,7 +60,7 @@ class ReportingServiceTest {
 
             // stub books
             bookList = List.of(
-                new Book(1L, "Dune", 1L, 1L, 1965),
+                new Book(1L, "Dune", 1L, 1L, 1965, LocalDate.now(), true),
                 new Book(2L, "Neuromancer", 2L, 1L, 1984),
                 new Book(3L, "LOTR", 3L, 2L, 1954)
             );
@@ -68,6 +68,7 @@ class ReportingServiceTest {
                 @Override public Book addBook(Book book) { throw new UnsupportedOperationException(); }
                 @Override public Optional<Book> findById(Long id) { return bookList.stream().filter(b -> b.id().equals(id)).findFirst(); }
                 @Override public List<Book> findAll() { return bookList; }
+                @Override public Optional<Book> updateBook(Book book) { return Optional.empty(); }
             };
 
             authors = Map.of(
@@ -87,7 +88,7 @@ class ReportingServiceTest {
 
         @Test
         @DisplayName("should return correct collection reports from data")
-        void shouldReturnReports() throws IOException {
+        void shouldReturnReports() {
             final List<CollectionReport> reports = service.generateCollectionReports();
             assertEquals(2, reports.size(), "Should have two collection reports");
 
@@ -97,7 +98,7 @@ class ReportingServiceTest {
             assertEquals(2, sciBooks.size());
             final Map<String, String> titleToAuthor = sciBooks.stream()
                 .collect(Collectors.toMap(BookReport::title, BookReport::authorName));
-            assertEquals("Frank Herbert", titleToAuthor.get("Dune"));
+            assertEquals("Frank Herbert", titleToAuthor.get("Dune (borrowed: " + LocalDate.now().format(fmt) + ")"));
             assertEquals("William Gibson", titleToAuthor.get("Neuromancer"));
         }
 
@@ -113,6 +114,7 @@ class ReportingServiceTest {
             assertTrue(lines.contains("Collection: Fantasy"));
             assertTrue(lines.stream().anyMatch(l -> l.trim().startsWith("Title") && l.contains("| Author")));
             assertTrue(lines.stream().anyMatch(l -> l.contains("Dune") && l.contains("Frank Herbert")));
+            assertTrue(lines.stream().anyMatch(l -> l.contains("Dune") && l.contains("borrowed: " + LocalDate.now().format(fmt))));
             assertTrue(lines.stream().anyMatch(l -> l.contains("LOTR") && l.contains("J.R.R. Tolkien")));
         }
 

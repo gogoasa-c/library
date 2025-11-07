@@ -7,7 +7,6 @@ import com.github.gogoasac.domain.entity.Author;
 import java.io.BufferedReader;
 import java.io.PrintStream;
 import java.util.List;
-import java.util.Objects;
 
 public class AuthorMenu extends MenuHandler {
     private static final String MENU_NAME = "Authors";
@@ -25,7 +24,7 @@ public class AuthorMenu extends MenuHandler {
             new MenuItem("View author by id", this::viewAuthorById)
         ));
 
-        this.authorInput = Objects.requireNonNull(authorManagementInput, "authorManagementInput");
+        this.authorInput = authorManagementInput;
     }
 
     private void addAuthor() {
@@ -45,7 +44,7 @@ public class AuthorMenu extends MenuHandler {
     }
 
     public void listAllAuthors() {
-        final java.util.List<Author> authors = authorInput.getAll();
+        final List<Author> authors = authorInput.getAll();
 
         if (authors == null || authors.isEmpty()) {
             super.printLine("No authors found.");

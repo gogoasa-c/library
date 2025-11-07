@@ -41,7 +41,23 @@ public class BookRepository extends AbstractFileRepository<Book> implements Book
             book.title(),
             book.authorId(),
             book.collectionId(),
-            book.publicationYear()
+            book.publicationYear(),
+            book.borrowedAt(),
+            book.isBorrowed()
         );
+    }
+
+    // --- new: update existing book ---
+    /**
+     * Update an existing book. The provided book should contain the id of the entity to update.
+     * Returns Optional.empty() when no such book exists.
+     */
+    public Optional<Book> updateBook(final Book book) {
+        if (book == null || book.id() == null) {
+            throw new IllegalArgumentException("Book and its id must be provided for update.");
+        }
+
+        // Delegate to the generic update; updater returns the provided book instance (setId will enforce id)
+        return super.updateById(book.id(), existing -> book);
     }
 }

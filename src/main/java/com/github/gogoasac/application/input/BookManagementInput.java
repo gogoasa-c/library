@@ -9,4 +9,5 @@ public interface BookManagementInput {
     Book addBook(AddBookCommand addBookCommand);
     List<Book> getAll();
     Book getById(Long id);
+    void borrow(final Long bookId);
 }

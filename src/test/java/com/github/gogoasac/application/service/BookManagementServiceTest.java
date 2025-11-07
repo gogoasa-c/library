@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -83,6 +84,20 @@ class BookManagementServiceTest {
                 public List<Book> findAll() {
                     return Collections.unmodifiableList(new ArrayList<>(storage));
                 }
+
+                @Override
+                public Optional<Book> updateBook(final Book book) {
+                    if (book == null || book.id() == null) {
+                        return Optional.empty();
+                    }
+                    for (int i = 0; i < storage.size(); i++) {
+                        if (storage.get(i).id().equals(book.id())) {
+                            storage.set(i, book);
+                            return Optional.of(book);
+                        }
+                    }
+                    return Optional.empty();
+                }
             };
 
             service = new BookManagementService(bookPersist, authorPersist, collectionPersist);
@@ -148,6 +163,11 @@ class BookManagementServiceTest {
                 public List<Book> findAll() {
                     return initial;
                 }
+
+                @Override
+                public Optional<Book> updateBook(Book book) {
+                    return Optional.empty();
+                }
             };
 
             authorPersist = new AuthorPersistence() {
@@ -211,6 +231,97 @@ class BookManagementServiceTest {
         void shouldThrowWhenNotFound() {
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.getById(999L));
             assertTrue(ex.getMessage().contains("Book with ID 999"));
+        }
+    }
+
+    @Nested
+    @DisplayName("borrow")
+    class BorrowTests {
+        @BeforeEach
+        void setup() {
+            // setup a simple in-memory persistence with one book
+            final List<Book> storage = new ArrayList<>();
+            storage.add(new Book(1L, "Loanable", 1L, 10L, 2022)); // not borrowed
+
+            bookPersist = new BookPersistence() {
+                @Override
+                public Book addBook(Book book) {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public Optional<Book> findById(Long id) {
+                    return storage.stream().filter(b -> b.id().equals(id)).findFirst();
+                }
+
+                @Override
+                public List<Book> findAll() {
+                    return Collections.unmodifiableList(new ArrayList<>(storage));
+                }
+
+                @Override
+                public Optional<Book> updateBook(final Book updated) {
+                    if (updated == null || updated.id() == null) {
+                        return Optional.empty();
+                    }
+                    for (int i = 0; i < storage.size(); i++) {
+                        if (storage.get(i).id().equals(updated.id())) {
+                            storage.set(i, updated);
+                            return Optional.of(updated);
+                        }
+                    }
+                    return Optional.empty();
+                }
+            };
+
+            // author/collection persistence simple stubs so service validation passes
+            authorPersist = new AuthorPersistence() {
+                @Override
+                public Author addAuthor(Author author) { throw new UnsupportedOperationException(); }
+                @Override
+                public Optional<Author> findById(Long id) { return Optional.of(new Author(1L, "Author One")); }
+                @Override
+                public List<Author> findAll() { return Collections.singletonList(new Author(1L, "Author One")); }
+            };
+
+            collectionPersist = new CollectionPersistence() {
+                @Override
+                public Collection addCollection(Collection collection) { throw new UnsupportedOperationException(); }
+                @Override
+                public Optional<Collection> findById(Long id) { return Optional.of(new Collection(10L, "Collection Ten")); }
+                @Override
+                public List<Collection> findAll() { return Collections.singletonList(new Collection(10L, "Collection Ten")); }
+            };
+
+            service = new BookManagementService(bookPersist, authorPersist, collectionPersist);
+        }
+
+        @Test
+        @DisplayName("should mark a book as borrowed")
+        void shouldMarkBookAsBorrowed() {
+            // precondition: book exists & not borrowed
+            Book before = bookPersist.findById(1L).orElseThrow();
+            assertFalse(before.isBorrowed());
+
+            service.borrow(1L);
+
+            Book after = bookPersist.findById(1L).orElseThrow();
+            assertTrue(after.isBorrowed());
+            assertNotNull(after.borrowedAt());
+            // ensure id/title unchanged
+            assertEquals(before.id(), after.id());
+            assertEquals(before.title(), after.title());
+            // borrowedAt should be recent (today) - allow same day check
+            assertEquals(LocalDate.now(), after.borrowedAt());
+        }
+
+        @Test
+        @DisplayName("should throw when borrowing non-existing book")
+        void shouldThrowWhenBookMissing() {
+            final long missingId = 999L;
+            NoSuchElementException ex = assertThrows(NoSuchElementException.class, () -> service.borrow(missingId));
+            // message thrown by Optional.orElseThrow() may vary; ensure exception thrown
+            assertNotNull(ex);
         }
     }
 }

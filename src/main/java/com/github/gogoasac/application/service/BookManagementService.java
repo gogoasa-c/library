@@ -35,7 +35,9 @@ public final class BookManagementService implements BookManagementInput {
             addBookCommand.title(),
             addBookCommand.authorId(),
             addBookCommand.collectionId(),
-            addBookCommand.publicationYear()
+            addBookCommand.publicationYear(),
+            null,
+            false
         );
 
         return bookPersistence.addBook(book);
@@ -52,4 +54,9 @@ public final class BookManagementService implements BookManagementInput {
             .orElseThrow(() -> new IllegalArgumentException("Book with ID " + id + " does not exist."));
     }
 
+    public void borrow(final Long bookId) {
+        final Book book = this.bookPersistence.findById(bookId).orElseThrow();
+
+        this.bookPersistence.updateBook(book.borrow()).orElseThrow();
+    }
 }

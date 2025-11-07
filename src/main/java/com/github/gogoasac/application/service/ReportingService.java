@@ -27,6 +27,7 @@ public record ReportingService(CollectionPersistence collectionPersistence, Book
                                AuthorPersistence authorPersistence) implements ReportingInput {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter BORROWED_DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
     public List<CollectionReport> generateCollectionReports() {
@@ -63,7 +64,16 @@ public record ReportingService(CollectionPersistence collectionPersistence, Book
     private BookReport mapToBookReport(final Book book) {
         final Author author = authorPersistence.findById(book.authorId())
             .orElseThrow(() -> new IllegalArgumentException("Author with ID " + book.authorId() + " does not exist."));
-        return new BookReport(book.title(), author.name());
+
+        final LocalDate borrowedAt = book.borrowedAt();
+        final String titleWithBorrowInfo;
+        if (borrowedAt == null) {
+            titleWithBorrowInfo = book.title();
+        } else {
+            titleWithBorrowInfo = String.format("%s (borrowed: %s)", book.title(), borrowedAt.format(BORROWED_DATE_FMT));
+        }
+
+        return new BookReport(titleWithBorrowInfo, author.name());
     }
 
     private String renderReportText(final List<CollectionReport> reports, final String date) {
